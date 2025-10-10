@@ -230,12 +230,19 @@ function AtBatForm({
   const options: Record<string, string[]> = {
     三振: ["空振り三振", "見逃し三振"],
     内野ゴロ: ["ピッチャーゴロ", "ファーストゴロ", "セカンドゴロ", "サードゴロ", "ショートゴロ"],
+    内野フライ:["ピッチャーフライ","キャッチャーフライ","ファーストフライ","セカンドフライ","サードフライ",
+"ショートフライ"],
+    ファールフライ:["ファーストファールフライ","セカンドファールフライ","サードファールフライ","キャッチャーファールフライ","レフトファールフライ","ライトファールフライ"],
+    外野ゴロ: ["ライトゴロ", "センターゴロ", "レフトゴロ"],
     外野フライ: ["レフトフライ", "センターフライ", "ライトフライ"],
+    犠牲フライ:["ライト犠牲フライ","センター犠牲フライ","レフト犠牲フライ"],
     ヒット: ["レフト前ヒット", "センター前ヒット", "ライト前ヒット"],
+    内野安打:["ショート内野安打","サード内野安打","セカンド内野安打","ファースト内野安打","ピッチャー内野安打","キャッチャー内野安打"],
     長打: ["レフトオーバー2ベースヒット", "センターオーバー2ベースヒット", "ライトオーバー2ベースヒット", "スリーベースヒット", "ランニング3ラン"],
     四死球: ["四球", "死球", "敬遠"],
-    バント小技: ["送りバント", "セーフティバント", "スクイズ", "犠牲フライ"],
-    エラーその他: ["ショートゴロエラー", "フィルダースチョイス", "打撃妨害", "キャッチャーインターフェア"],
+    エラー: ["ショートエラー","サードエラー","セカンドエラー","ファーストエラー","ピッチャーエラー","キャッチャーエラー","レフトエラー","センターエラー","ライトエラー"],
+    バント小技: ["送りバント", "セーフティバント", "スクイズ",],
+    その他: ["フィルダースチョイス", "打撃妨害", "キャッチャーインターフェア"],
   };
 
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
@@ -249,7 +256,7 @@ function AtBatForm({
     const useOrder = battingNowIsAlly ? selectedAllyOrder : selectedEnemyOrder;
     const name = battingNowIsAlly ? (lineup[(useOrder - 1) % 9]?.name || "打者") : "";
 
-    const text = extraPlay ? extraPlay : (result || "結果未入力") + (freeText ? ` ${freeText}` : "");
+const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
 
     let line = "";
@@ -435,7 +442,7 @@ export default function BaseballReportApp() {
 
   const [innings, setInnings] = useState<InningRow[]>(Array.from({ length: 7 }, makeInning));
   const [lineup, setLineup] = useState(
-    Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: "", pos: "" }))
+    Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: "", pos: ""}))
   );
   const [subs, setSubs] = useState<any[]>([]);
   // subs の削除関数
@@ -577,7 +584,31 @@ subs.forEach((s: any) => {
       setCurrentOuts((prev) => Math.max(0, prev - last.deltaOuts));
     }
   }
-
+  
+// 入力データを自動保存
+useEffect(() => {
+  localStorage.setItem('baseballReportData', JSON.stringify({
+    gameInfo, innings, lineup, subs, records,
+    allyOrder, enemyOrder, currentInning, currentHalf, currentOuts
+  }));
+}, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts]);
+// 初回ロード時に復元
+useEffect(() => {
+  const saved = localStorage.getItem('baseballReportData');
+  if (saved) {
+    const data = JSON.parse(saved);
+    setGameInfo(data.gameInfo || gameInfo);
+    setInnings(data.innings || innings);
+    setLineup(data.lineup || lineup);
+    setSubs(data.subs || []);
+    setRecords(data.records || records);
+    setAllyOrder(data.allyOrder || 1);
+    setEnemyOrder(data.enemyOrder || 1);
+    setCurrentInning(data.currentInning || 1);
+    setCurrentHalf(data.currentHalf || '表');
+    setCurrentOuts(data.currentOuts || 0);
+  }
+}, []);
   return (
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
