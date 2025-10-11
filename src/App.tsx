@@ -426,6 +426,8 @@ const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${fr
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
   const playerList = DEFAULT_PLAYERS;
+ 
+  
 const [gameInfo, setGameInfo] = useState(() => {
   const saved = localStorage.getItem('baseballReportData');
   if (saved) {
