@@ -486,8 +486,8 @@ export default function BaseballReportApp() {
 
   // レポート生成（自動；手書き編集は textarea に直接）
   useEffect(() => {
-    const totalAway = innings.reduce((a, b) => a + Number(b.away || 0), 0);
-    const totalHome = innings.reduce((a, b) => a + Number(b.home || 0), 0);
+    const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
+    const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
 
     let out = `${gameInfo.title}　${gameInfo.home}vs${gameInfo.away}　結果\n\n`;
     out += `◆日付　${gameInfo.date}\n\n`;
