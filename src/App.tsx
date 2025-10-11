@@ -556,7 +556,7 @@ records.forEach((innRec: any, i: number) => {
   const n = i + 1;
   if (innRec.top.length) {
     out += `◆${n}回表\n`;
-        innRec.top.forEach((r) => (out += r.line + "\n"));
+        innRec.top.forEach((r:any) => (out += r.line + "\n"));
         const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
         if (runsTop !== "") {
           const labelTop = gameInfo.homeBatting ? "失点" : "得点";
@@ -568,7 +568,7 @@ records.forEach((innRec: any, i: number) => {
       }
       if (innRec.bottom.length) {
         out += `◆${n}回裏\n`;
-        innRec.bottom.forEach((r) => (out += r.line + "\n"));
+        innRec.bottom.forEach((r:any) => (out += r.line + "\n"));
         const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
         if (runsBottom !== "") {
           const labelBottom = gameInfo.homeBatting ? "得点" : "失点";
