@@ -426,20 +426,27 @@ const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${fr
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
   const playerList = DEFAULT_PLAYERS;
-  const [gameInfo, setGameInfo] = useState({
-    title: "25練習試合",
-    away: "相手",
-    home: "八王子",
-    date: "2025/5/4(日)",
-    place: "八王子リトルシニアグラウンド",
-    weather: "晴",
-    startHour: "10",
-    startMin: "00",
-    endHour: "12",
-    endMin: "00",
-    homeBatting: true,
-  });
-
+const [gameInfo, setGameInfo] = useState(() => {
+  const saved = localStorage.getItem('baseballReportData');
+  if (saved) {
+    return JSON.parse(saved).gameInfo || {
+      title: '25練習試合',
+      away: '相手',
+      home: '八王子',
+      date: '2025/5/4(日)',
+      place: '八王子リトルシニアグラウンド',
+      weather: '晴',
+      startHour: '10',
+      startMin: '00',
+      endHour: '12',
+      endMin: '00',
+      homeBatting: true,
+    };
+  }
+  return {
+    title: '25練習試合', away: '相手', home: '八王子', date: '2025/5/4(日)', place: '八王子リトルシニアグラウンド', weather: '晴', startHour: '10', startMin: '00', endHour: '12', endMin: '00', homeBatting: true,
+  };
+});
   const [innings, setInnings] = useState<InningRow[]>(Array.from({ length: 7 }, makeInning));
   const [lineup, setLineup] = useState(
     Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: "", pos: ""}))
