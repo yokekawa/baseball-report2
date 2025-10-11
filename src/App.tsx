@@ -551,13 +551,11 @@ subs.forEach((s: any) => {
   }
 });
 
-
-
 // 各回の打席記録
-    records.forEach((innRec, i) => {
-      const n = i + 1;
-      if (innRec.top.length) {
-        out += `◆${n}回表\n`;
+records.forEach((innRec: any, i: number) => {
+  const n = i + 1;
+  if (innRec.top.length) {
+    out += `◆${n}回表\n`;
         innRec.top.forEach((r) => (out += r.line + "\n"));
         const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
         if (runsTop !== "") {
