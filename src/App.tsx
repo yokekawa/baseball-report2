@@ -886,6 +886,28 @@ localStorage.setItem('baseballReportData', JSON.stringify({
           >
             📋 コピー
           </button>
+
+<button
+  onClick={() => {
+    if (window.confirm('打席記録をすべて削除します。よろしいですか？')) {
+      if (window.confirm('本当によろしいですか？')) {
+        const clearedRecords = Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
+        setRecords(clearedRecords);
+        const saved = JSON.parse(localStorage.getItem('baseballReportData') || '{}');
+        localStorage.setItem('baseballReportData', JSON.stringify({
+          ...saved,
+          records: clearedRecords
+        }));
+        alert('打席記録をすべて削除しました。');
+      }
+    }
+  }}
+  className="mt-3 ml-2 px-4 py-2 bg-red-600 text-white rounded"
+>
+  🗑 打席記録削除
+</button>
+
+          
         </div>
       </div>
     </div>
