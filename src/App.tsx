@@ -504,8 +504,8 @@ out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join("
 out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n\n`;
 
     } else {
-      out += ` 【${gameInfo.home}】 / ${innings.map((i) => i.home || "").join(" ")} / ${totalHome}\n`;
-      out += ` 【${gameInfo.away}】 / ${innings.map((i) => i.away || "").join(" ")} / ${totalAway}\n\n`;
+out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n`;
+out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n\n`;
     }
 
 // 先発メンバー（→で交代記載、回表裏を含める）
