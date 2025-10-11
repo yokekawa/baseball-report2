@@ -426,49 +426,63 @@ const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${fr
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
   const playerList = DEFAULT_PLAYERS;
- 
-  
-const [gameInfo, setGameInfo] = useState(() => {
-  const saved = localStorage.getItem('baseballReportData');
-  if (saved) {
-    return JSON.parse(saved).gameInfo || {
-      title: '25練習試合',
-      away: '相手',
-      home: '八王子',
-      date: '2025/5/4(日)',
-      place: '八王子リトルシニアグラウンド',
-      weather: '晴',
-      startHour: '10',
-      startMin: '00',
-      endHour: '12',
-      endMin: '00',
-      homeBatting: true,
-    };
-  }
-  return {
-    title: '25練習試合', away: '相手', home: '八王子', date: '2025/5/4(日)', place: '八王子リトルシニアグラウンド', weather: '晴', startHour: '10', startMin: '00', endHour: '12', endMin: '00', homeBatting: true,
-  };
-});
-  const [innings, setInnings] = useState<InningRow[]>(Array.from({ length: 7 }, makeInning));
-  const [lineup, setLineup] = useState(
-    Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: "", pos: ""}))
-  );
-  const [subs, setSubs] = useState<any[]>([]);
-  // subs の削除関数
-  function handleDeleteSub(index:number){
-    const updated = subs.filter((_,i)=>i!==index);
-    setSubs(updated);
-  }
-  const [records, setRecords] = useState(
-    Array.from({ length: 7 }, () => ({ top: [] as PlayRecord[], bottom: [] as PlayRecord[] }))
-  );
-  const [reportText, setReportText] = useState("");
 
-  const [allyOrder, setAllyOrder] = useState(1);
-  const [enemyOrder, setEnemyOrder] = useState(1);
-  const [currentInning, setCurrentInning] = useState(1);
-  const [currentHalf, setCurrentHalf] = useState("表");
-  const [currentOuts, setCurrentOuts] = useState(0);
+  const [gameInfo, setGameInfo] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    if (saved) return JSON.parse(saved).gameInfo || {};
+    return { title: '25練習試合', away: '相手', home: '八王子', date: '2025/5/4(日)', place: '八王子リトルシニアグラウンド', weather: '晴', startHour: '10', startMin: '00', endHour: '12', endMin: '00', homeBatting: true };
+  });
+
+  const [innings, setInnings] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).innings || Array.from({ length: 7 }, makeInning) : Array.from({ length: 7 }, makeInning);
+  });
+
+  const [lineup, setLineup] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).lineup || Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' })) : Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' }));
+  });
+
+  const [subs, setSubs] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).subs || [] : [];
+  });
+
+  const [records, setRecords] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).records || Array.from({ length: 7 }, () => ({ top: [], bottom: [] })) : Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
+  });
+
+  const [reportText, setReportText] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).reportText || '' : '';
+  });
+
+  const [allyOrder, setAllyOrder] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).allyOrder || 1 : 1;
+  });
+
+  const [enemyOrder, setEnemyOrder] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).enemyOrder || 1 : 1;
+  });
+
+  const [currentInning, setCurrentInning] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).currentInning || 1 : 1;
+  });
+
+  const [currentHalf, setCurrentHalf] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).currentHalf || '表' : '表';
+  });
+
+  const [currentOuts, setCurrentOuts] = useState(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    return saved ? JSON.parse(saved).currentOuts || 0 : 0;
+  });
+;
 
   // レポート生成（自動；手書き編集は textarea に直接）
   useEffect(() => {
