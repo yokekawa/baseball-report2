@@ -598,9 +598,10 @@ subs.forEach((s: any) => {
 useEffect(() => {
   localStorage.setItem('baseballReportData', JSON.stringify({
     gameInfo, innings, lineup, subs, records,
-    allyOrder, enemyOrder, currentInning, currentHalf, currentOuts
+    allyOrder, enemyOrder, currentInning, currentHalf, currentOuts,
+    reportText
   }));
-}, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts]);
+}, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
@@ -616,8 +617,10 @@ useEffect(() => {
     setCurrentInning(data.currentInning || 1);
     setCurrentHalf(data.currentHalf || '表');
     setCurrentOuts(data.currentOuts || 0);
+    setReportText(data.reportText || "");
   }
 }, []);
+
   return (
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
