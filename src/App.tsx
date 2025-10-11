@@ -98,18 +98,25 @@ function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass }
   );
 }
 
-function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd }: any) {
+// 修正ポイントまとめ
+// ① 重複表示防止: レポート生成内の subs.forEach(...) による records 追加を削除
+// ② 途中交代対応: SubForm に currentInning/currentHalf を渡し、handleAdd で利用
+// ③ 打順反映: lineup を交代時に更新
+// ④ 代打対応: type="代打" を追加
+
+// SubForm 修正版
+function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, setLineup }: any) {
   const [type, setType] = useState("交代");
   const [out, setOut] = useState("");
   const [inn, setInn] = useState("");
   const [pos, setPos] = useState("");
   const [oldPos, setOldPos] = useState("");
   const [newPos, setNewPos] = useState("");
-  const [inning, setInning] = useState(1);
-  const [half, setHalf] = useState("表");
+  const [inning, setInning] = useState(currentInning || 1);
+  const [half, setHalf] = useState(currentHalf || "表");
 
   const currentOnField = lineup.map((l: any) => l.name).filter(Boolean);
-  const canIn = type === "交代"
+  const canIn = type === "交代" || type === "代打"
     ? playerList.filter((p: string) => !currentOnField.includes(p) || p === inn)
     : currentOnField;
 
@@ -121,69 +128,62 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd }: any) {
   }
 
   function handleAdd() {
-    if (type === "交代") {
+    if (type === "交代" || type === "代打") {
       if (!out || !inn || !pos) return;
-      onAdd({ type, out, in: inn, pos, inning, half });
-      setOut("");
-      setInn("");
-      setPos("");
-    } else {
+      const sub = { type, out, in: inn, pos, inning, half };
+      setSubs((prev:any) => [...prev, sub]);
+      const updated = lineup.map((l:any) => l.name === out ? { ...l, name: inn, pos: pos } : l);
+      setLineup(updated);
+      onAdd(sub); // ← 一度だけ呼ぶ
+    } else if (type === "守備変更") {
       if (!out || !oldPos || !newPos) return;
-      onAdd({ type, out, oldPos, newPos, inning, half });
-      setOut("");
-      setOldPos("");
-      setNewPos("");
+      const sub = { type, out, oldPos, newPos, inning, half };
+      setSubs((prev:any) => [...prev, sub]);
+      const updated = lineup.map((l:any) => l.name === out ? { ...l, pos: newPos } : l);
+      setLineup(updated);
+      onAdd(sub);
     }
+
+    setOut(""); setInn(""); setPos(""); setOldPos(""); setNewPos("");
   }
 
   return (
     <div className="mt-4 p-2 border rounded">
-      <h3 className="font-semibold mb-2">交代・守備変更</h3>
+      <h3 className="font-semibold mb-2">交代・守備変更・代打</h3>
       <div className="flex flex-wrap gap-2 mb-2">
         <select value={type} onChange={(e) => setType(e.target.value)} className="p-1 border rounded">
           <option>交代</option>
           <option>守備変更</option>
+          <option>代打</option>
         </select>
-        {type === "交代" ? (
+        {(type === "交代" || type === "代打") ? (
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">退く選手</option>
-              {currentOnField.map((n: string) => (
-                <option key={n}>{n}</option>
-              ))}
+              {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
             </select>
             <select value={inn} onChange={(e) => setInn(e.target.value)} className="p-1 border rounded">
               <option value="">入る選手</option>
-              {canIn.map((n: string) => (
-                <option key={n}>{n}</option>
-              ))}
+              {canIn.map((n: string) => <option key={n}>{n}</option>)}
             </select>
             <select value={pos} onChange={(e) => setPos(e.target.value)} className="p-1 border rounded">
               <option value="">守備</option>
-              {posList.map((p: string) => (
-                <option key={p}>{p}</option>
-              ))}
+              {posList.map((p: string) => <option key={p}>{p}</option>)}
             </select>
           </>
         ) : (
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">選手</option>
-              {currentOnField.map((n: string) => (
-                <option key={n}>{n}</option>
-              ))}
+              {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
             </select>
             <select value={oldPos} onChange={(e) => setOldPos(e.target.value)} className="p-1 border rounded">
               <option value="">変更前守備</option>
-              {posList.map((p: string) => (
-                <option key={p}>{p}</option>
-              ))}
+              {posList.map((p: string) => <option key={p}>{p}</option>)}
             </select>
             <select value={newPos} onChange={(e) => setNewPos(e.target.value)} className="p-1 border rounded">
               <option value="">変更後守備</option>
-              {posList.map((p: string) => (
-                <option key={p}>{p}</option>
-              ))}
+              {posList.map((p: string) => <option key={p}>{p}</option>)}
             </select>
           </>
         )}
@@ -195,11 +195,12 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd }: any) {
           <option>裏</option>
         </select>
         <button onClick={handleAdd} className="px-3 py-1 bg-blue-600 text-white rounded">追加</button>
-        <button onClick={handleSubUndo} className="mt-2 px-3 py-1 bg-red-500 text-white rounded">変更取り消し</button>
+        <button onClick={handleSubUndo} className="px-3 py-1 bg-red-500 text-white rounded">取り消し</button>
       </div>
     </div>
   );
 }
+
 // 打席入力フォーム
 function AtBatForm({
   lineup,
@@ -224,7 +225,10 @@ function AtBatForm({
   const [extraPlay, setExtraPlay] = useState("");
   const [selectedAllyOrder, setSelectedAllyOrder] = useState<number>(allyOrder);
   const [selectedEnemyOrder, setSelectedEnemyOrder] = useState<number>(enemyOrder);
-
+// 追加（ここから）
+const [direction, setDirection] = useState("");
+const [outcome, setOutcome] = useState("");
+// 追加（ここまで）
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
 
   const options: Record<string, string[]> = {
@@ -256,7 +260,7 @@ function AtBatForm({
     const useOrder = battingNowIsAlly ? selectedAllyOrder : selectedEnemyOrder;
     const name = battingNowIsAlly ? (lineup[(useOrder - 1) % 9]?.name || "打者") : "";
 
-const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${freeText}` : "");
+const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
 
     let line = "";
@@ -307,10 +311,13 @@ const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${fr
     }
 
     // クリア
-    setResult("");
-    setFreeText("");
-    setBases("なし");
-    setExtraPlay("");
+setResult("");
+setFreeText("");
+setBases("なし");
+setExtraPlay("");
+setDirection("");   // 追加
+setOutcome("");     // 追加
+
   }
 
   return (
@@ -350,22 +357,78 @@ const text = extraPlay ? extraPlay : (result ? result : "") + (freeText ? ` ${fr
         )}
       </div>
 
-      <label className="block text-sm mb-1">打席結果（カテゴリ → 詳細）</label>
-      <select
-        value={result}
-        onChange={(e) => setResult(e.target.value)}
-        className="w-full p-2 border rounded mb-2"
-        disabled={!!extraPlay}
-      >
-        <option value="">（選択してください）</option>
-        {Object.entries(options).map(([cat, vals]) => (
-          <optgroup key={cat} label={cat}>
-            {vals.map((v) => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+<label className="block text-sm mb-1">打球方向</label>
+<select
+  value={direction}
+  onChange={(e) => setDirection(e.target.value)}
+  className="w-full p-2 border rounded mb-2"
+  disabled={!!extraPlay}
+>
+  <option value="">（選択してください）</option>
+  <optgroup label="内野方向">
+    <option value="ピッチャー">ピッチャー</option>
+    <option value="キャッチャー">キャッチャー</option>
+    <option value="ファースト">ファースト</option>
+    <option value="セカンド">セカンド</option>
+    <option value="サード">サード</option>
+    <option value="ショート">ショート</option>
+  </optgroup>
+  <optgroup label="外野方向">
+    <option value="レフト">レフト</option>
+    <option value="センター">センター</option>
+    <option value="ライト">ライト</option>
+    <option value="左中間">左中間</option>
+    <option value="右中間">右中間</option>
+  </optgroup>
+  <optgroup label="ライン・ファールゾーン">
+    <option value="レフト線">レフト線</option>
+    <option value="ライト線">ライト線</option>
+    <option value="ファーストファール">ファーストファール</option>
+    <option value="サードファール">サードファール</option>
+  </optgroup>
+</select>
+
+<label className="block text-sm mb-1">打撃結果</label>
+<select
+  value={outcome}
+  onChange={(e) => setOutcome(e.target.value)}
+  className="w-full p-2 border rounded mb-3"
+  disabled={!!extraPlay}
+>
+  <option value="">（選択してください）</option>
+  <optgroup label="安打・長打">
+    <option value="ヒット">ヒット</option>
+    <option value="2ベースヒット">2ベースヒット</option>
+    <option value="3ベースヒット">3ベースヒット</option>
+    <option value="ランニングホームラン">ランニングホームラン</option>
+    <option value="ホームラン">ホームラン</option>
+  </optgroup>
+  <optgroup label="凡打">
+    <option value="フライ">フライ</option>
+    <option value="ゴロ">ゴロ</option>
+    <option value="ライナー">ライナー</option>
+  </optgroup>
+  <optgroup label="進塁打・小技">
+    <option value="犠牲フライ">犠牲フライ</option>
+    <option value="犠牲バント">犠牲バント</option>
+    <option value="セーフティバント">セーフティバント</option>
+    <option value="送りバント">送りバント</option>
+  </optgroup>
+  <optgroup label="四死球・三振">
+    <option value="空振り三振">空振り三振</option>
+    <option value="見逃し三振">見逃し三振</option>
+    <option value="四球">四球</option>
+    <option value="死球">死球</option>
+    <option value="敬遠">敬遠</option>
+  </optgroup>
+  <optgroup label="その他">
+    <option value="エラー">エラー</option>
+    <option value="打撃妨害">打撃妨害</option>
+    <option value="ボーク">ボーク</option>
+    <option value="フィルダースチョイス">フィルダースチョイス</option>
+  </optgroup>
+</select>
+
 
       <input
         value={freeText}
@@ -484,128 +547,127 @@ export default function BaseballReportApp() {
   });
 ;
 
-  // レポート生成（自動；手書き編集は textarea に直接）
-  useEffect(() => {
-    const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
-    const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
+// レポート生成（自動；手書き編集は textarea に直接）
+useEffect(() => {
+  const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
+  const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
 
-    let out = `${gameInfo.title}　${gameInfo.home}vs${gameInfo.away}　結果\n\n`;
-    out += `◆日付　${gameInfo.date}\n\n`;
-    out += `◆場所　${gameInfo.place}\n\n`;
-    out += `◆天候　${gameInfo.weather}\n\n`;
-    out += `◆試合開始時刻 ${gameInfo.startHour}時${gameInfo.startMin}分開始\n\n`;
-    out += `◆試合終了時刻 ${gameInfo.endHour}時${gameInfo.endMin}分終了\n\n`;
-    out += ` ※${gameInfo.home}　${gameInfo.homeBatting ? "後攻" : "先攻"}\n\n`;
+  let out = `${gameInfo.title}　${gameInfo.home}vs${gameInfo.away}\n\n`;
+  out += `◆日付　${gameInfo.date}\n\n`;
+  out += `◆場所　${gameInfo.place}\n\n`;
+  out += `◆天候　${gameInfo.weather}\n\n`;
+  out += `◆試合開始時刻 ${gameInfo.startHour}時${gameInfo.startMin}分開始\n\n`;
+  out += `◆試合終了時刻 ${gameInfo.endHour}時${gameInfo.endMin}分終了\n\n`;
+  out += ` ※${gameInfo.home}　${gameInfo.homeBatting ? "後攻" : "先攻"}\n\n`;
 
-    // スコアボード
-    out += ` 　  　　　/  1  2  3  4  5  6  7  /  計\n`;
-    if (gameInfo.homeBatting) {
-out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n`;
-out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n\n`;
-
-    } else {
-out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n`;
-out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n\n`;
-    }
-
-// 先発メンバー（→で交代記載、回表裏を含める）
-out += `【先発メンバー】\n`;
-lineup.forEach((p: any) => {
-  if (!p.name) return;
-  let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
-  // その選手からの交代を → で連結（回表裏付き）
-const chain = subs
-  .filter((s: any) => s.out === p.name)
-  .map((s: any) => {
-    if (s.type === "守備変更") {
-      return `${s.inning}回${s.half}(${s.newPos})`;
-    } else {
-      return `${s.in}${s.pos ? `(${s.pos})` : ""}${s.inning}回${s.half}`;
-    }
-  });
-  if (chain.length) line += `→${chain.join("→")}`;
-  out += line + "\n";
-});
-out += `\n`;
-
-// 打席結果にも交代・守備変更を記録
-subs.forEach((s: any) => {
-  let line = "";
-  if (s.type === "守備変更") {
-    line = `守備変更：${s.out}${s.oldPos ? `(${s.oldPos})` : ""}→(${s.newPos})`;
+  out += ` 　  　　　/  1  2  3  4  5  6  7  /  計\n`;
+  if (gameInfo.homeBatting) {
+    out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n`;
+    out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n\n`;
   } else {
-    line = `${s.type}：${s.out}${s.pos ? `(${s.pos})` : ""}→${s.in}${s.pos ? `(${s.pos})` : ""}`;
+    out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n`;
+    out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n\n`;
   }
 
-  const rec: PlayRecord = {
-    line,
-    deltaOuts: 0,
-    advancedOrder: false,
-  };
+  out += `【先発メンバー】\n`;
+  lineup.forEach((p: any) => {
+    if (!p.name) return;
+    let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
 
-  const idx = s.inning - 1;
-  if (s.half === "表") {
-    records[idx].top.push(rec);
-  } else {
-    records[idx].bottom.push(rec);
-  }
-});
+    // 同じ選手または後に交代で関係する選手を抽出
+    const relatedSubs = subs.filter((s: any) => s.out === p.name || s.prev === p.name || s.original === p.name || s.in === p.name);
 
-// 各回の打席記録
-records.forEach((innRec: any, i: number) => {
-  const n = i + 1;
-  if (innRec.top.length) {
-    out += `◆${n}回表\n`;
-        innRec.top.forEach((r:any) => (out += r.line + "\n"));
-        const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
-        if (runsTop !== "") {
-          const labelTop = gameInfo.homeBatting ? "失点" : "得点";
-          out += `★この回${runsTop}${labelTop}\n`;
-        }
-        // 相手の攻撃 => 味方投手の表示（isOpponent=false）
-        out += renderPitchers(innings[i].awayPitchers || [], false);
-        out += `\n`;
-      }
-      if (innRec.bottom.length) {
-        out += `◆${n}回裏\n`;
-        innRec.bottom.forEach((r:any) => (out += r.line + "\n"));
-        const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
-        if (runsBottom !== "") {
-          const labelBottom = gameInfo.homeBatting ? "得点" : "失点";
-          out += `★この回${runsBottom}${labelBottom}\n`;
-        }
-        // 味方の攻撃 => 相手投手の表示（isOpponent=true）
-        out += renderPitchers(innings[i].homePitchers || [], true);
-        out += `\n`;
+    // 出場順に右方向へ連結
+    relatedSubs.forEach((s: any) => {
+      if (s.type === "守備変更") {
+        line += `→${s.out}(${s.oldPos})→${s.out}(${s.newPos})${s.inning}回${s.half}`;
+      } else {
+        line += `→${s.in}(${s.pos || ''})`;
       }
     });
 
-    setReportText(out);
-  }, [gameInfo, innings, lineup, subs, records]);
+    out += line + "\n";
+  });
+  out += `\n`;
+
+  records.forEach((innRec: any, i: number) => {
+    const n = i + 1;
+    if (innRec.top.length) {
+      out += `◆${n}回表\n`;
+      innRec.top.forEach((r: any) => (out += r.line + "\n"));
+      const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
+      if (runsTop !== "") {
+        const labelTop = gameInfo.homeBatting ? "失点" : "得点";
+        out += `★この回${runsTop}${labelTop}\n`;
+      }
+      out += renderPitchers(innings[i].awayPitchers || [], false);
+      out += `\n`;
+    }
+    if (innRec.bottom.length) {
+      out += `◆${n}回裏\n`;
+      innRec.bottom.forEach((r: any) => (out += r.line + "\n"));
+      const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
+      if (runsBottom !== "") {
+        const labelBottom = gameInfo.homeBatting ? "得点" : "失点";
+        out += `★この回${runsBottom}${labelBottom}\n`;
+      }
+      out += renderPitchers(innings[i].homePitchers || [], true);
+      out += `\n`;
+    }
+  });
+
+  setReportText(out);
+}, [gameInfo, innings, lineup, subs, records]);
 
   // 最後の入力を取り消す（差分で戻す）
-  function handleUndo() {
-    const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
-    const copy = [...records];
-    const bucket = currentHalf === "表" ? copy[idx].top : copy[idx].bottom;
-    if (!bucket.length) return;
-    const last = bucket.pop() as PlayRecord;
-    setRecords(copy);
-    
-    // 打順を戻す（走塁のみのプレーは advancedOrder=false なので戻さない）
-    if (last.advancedOrder) {
-      if (currentHalf === "表") {
-        setEnemyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
-      } else {
-        setAllyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
+function handleUndo() {
+  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
+  const copy = [...records];
+  const bucket = currentHalf === "表" ? copy[idx].top : copy[idx].bottom;
+
+  // 現在のイニングが空でも、前のイニングの裏から戻せるように調整
+  if (!bucket.length) {
+    if (currentHalf === "裏" && idx >= 0) {
+      const prevTop = copy[idx].top;
+      if (prevTop.length) {
+        const last = prevTop.pop() as PlayRecord;
+        setRecords(copy);
+        setCurrentHalf("表");
+        setCurrentInning(idx + 1);
+        if (last.deltaOuts > 0) setCurrentOuts(3 - last.deltaOuts);
+        return;
+      }
+    } else if (currentHalf === "表" && idx > 0) {
+      const prevBottom = copy[idx - 1].bottom;
+      if (prevBottom.length) {
+        const last = prevBottom.pop() as PlayRecord;
+        setRecords(copy);
+        setCurrentHalf("裏");
+        setCurrentInning(idx);
+        if (last.deltaOuts > 0) setCurrentOuts(3 - last.deltaOuts);
+        return;
       }
     }
+    return; // どちらにも戻せない場合
+  }
 
-    // アウトカウントを戻す（アウトプレーで増えた分のみ）
-    if (last.deltaOuts > 0) {
-      setCurrentOuts((prev:number) => Math.max(0, prev - last.deltaOuts));
+  const last = bucket.pop() as PlayRecord;
+  setRecords(copy);
+
+  // 打順を戻す
+  if (last.advancedOrder) {
+    if (currentHalf === "表") {
+      setEnemyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
+    } else {
+      setAllyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
     }
   }
+
+  // アウトカウントを戻す
+  if (last.deltaOuts > 0) {
+    setCurrentOuts((prev:number) => Math.max(0, prev - last.deltaOuts));
+  }
+}
   
 // 入力データを自動保存
 useEffect(() => {
@@ -734,80 +796,152 @@ useEffect(() => {
 
           {/* スコアボード & 投手入力 */}
           <h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
-          {innings.map((inn:any, idx:number) => (
-            <div key={idx} className="border p-2 mb-3 rounded">
-              <div className="mb-1 font-bold">{idx + 1}回</div>
+{innings.map((inn:any, idx:number) => (
+  <div key={idx} className="border p-2 mb-3 rounded">
+    <div className="mb-1 font-bold">{idx + 1}回</div>
 
-              {/* 相手の攻撃（味方投手） */}
-              <div className="mb-2">
-                <span className="font-semibold">相手の攻撃</span>
-                <div className="flex gap-2 items-center mt-1">
-                  <span>得点</span>
-                  <input
-                    type="number"
-                    value={inn.away as any}
-                    onChange={(e) => {
-                      const copy = [...innings];
-                      copy[idx].away = e.target.value as any;
-                      setInnings(copy);
-                    }}
-                    className="w-16 p-1 border rounded"
-                  />
-                </div>
-                <PitcherInputs
-                  label="味方投手"
-                  pitchers={inn.awayPitchers}
-                  setPitchers={(p: any) => {
-                    const copy = [...innings];
-                    copy[idx].awayPitchers = p;
-                    setInnings(copy);
-                  }}
-                  playerList={playerList}
-                  buttonClass="bg-blue-100"
-                />
-              </div>
+    {gameInfo.homeBatting ? (
+      <>
+        {/* 先攻（相手）の攻撃 */}
+        <div className="mb-2">
+          <span className="font-semibold">相手の攻撃</span>
+          <div className="flex gap-2 items-center mt-1">
+            <span>得点</span>
+            <input
+              type="number"
+              value={inn.away as any}
+              onChange={(e) => {
+                const copy = [...innings];
+                copy[idx].away = e.target.value as any;
+                setInnings(copy);
+              }}
+              className="w-16 p-1 border rounded"
+            />
+          </div>
+          <PitcherInputs
+            label="味方投手"
+            pitchers={inn.awayPitchers}
+            setPitchers={(p: any) => {
+              const copy = [...innings];
+              copy[idx].awayPitchers = p;
+              setInnings(copy);
+            }}
+            playerList={playerList}
+            buttonClass="bg-blue-100"
+          />
+        </div>
 
-              {/* 味方の攻撃（相手投手） */}
-              <div className="mb-2">
-                <span className="font-semibold">味方の攻撃</span>
-                <div className="flex gap-2 items-center mt-1">
-                  <span>得点</span>
-                  <input
-                    type="number"
-                    value={inn.home as any}
-                    onChange={(e) => {
-                      const copy = [...innings];
-                      copy[idx].home = e.target.value as any;
-                      setInnings(copy);
-                    }}
-                    className="w-16 p-1 border rounded"
-                  />
-                </div>
-                <PitcherInputs
-                  label="相手投手"
-                  pitchers={inn.homePitchers}
-                  setPitchers={(p: any) => {
-                    const copy = [...innings];
-                    copy[idx].homePitchers = p;
-                    setInnings(copy);
-                  }}
-                  playerList={playerList}
-                  buttonClass="bg-green-100"
-                />
-              </div>
-            </div>
+        {/* 後攻（ホーム／味方）の攻撃 */}
+        <div className="mb-2">
+          <span className="font-semibold">味方の攻撃</span>
+          <div className="flex gap-2 items-center mt-1">
+            <span>得点</span>
+            <input
+              type="number"
+              value={inn.home as any}
+              onChange={(e) => {
+                const copy = [...innings];
+                copy[idx].home = e.target.value as any;
+                setInnings(copy);
+              }}
+              className="w-16 p-1 border rounded"
+            />
+          </div>
+          <PitcherInputs
+            label="相手投手"
+            pitchers={inn.homePitchers}
+            setPitchers={(p: any) => {
+              const copy = [...innings];
+              copy[idx].homePitchers = p;
+              setInnings(copy);
+            }}
+            playerList={playerList}
+            buttonClass="bg-green-100"
+          />
+        </div>
+      </>
+    ) : (
+      <>
+        {/* 先攻（ホーム／味方）の攻撃 */}
+        <div className="mb-2">
+          <span className="font-semibold">味方の攻撃</span>
+          <div className="flex gap-2 items-center mt-1">
+            <span>得点</span>
+            <input
+              type="number"
+              value={inn.home as any}
+              onChange={(e) => {
+                const copy = [...innings];
+                copy[idx].home = e.target.value as any;
+                setInnings(copy);
+              }}
+              className="w-16 p-1 border rounded"
+            />
+          </div>
+          <PitcherInputs
+            label="相手投手"
+            pitchers={inn.homePitchers}
+            setPitchers={(p: any) => {
+              const copy = [...innings];
+              copy[idx].homePitchers = p;
+              setInnings(copy);
+            }}
+            playerList={playerList}
+            buttonClass="bg-green-100"
+          />
+        </div>
+
+        {/* 後攻（相手）の攻撃 */}
+        <div className="mb-2">
+          <span className="font-semibold">相手の攻撃</span>
+          <div className="flex gap-2 items-center mt-1">
+            <span>得点</span>
+            <input
+              type="number"
+              value={inn.away as any}
+              onChange={(e) => {
+                const copy = [...innings];
+                copy[idx].away = e.target.value as any;
+                setInnings(copy);
+              }}
+              className="w-16 p-1 border rounded"
+            />
+          </div>
+          <PitcherInputs
+            label="味方投手"
+            pitchers={inn.awayPitchers}
+            setPitchers={(p: any) => {
+              const copy = [...innings];
+              copy[idx].awayPitchers = p;
+              setInnings(copy);
+            }}
+            playerList={playerList}
+            buttonClass="bg-blue-100"
+          />
+        </div>
+      </>
+    )}
+  </div>
           ))}
 
-          {/* 交代フォーム */}
+{/* 交代フォーム */}
 <SubForm
   playerList={playerList}
   posList={POS_LIST}
   lineup={lineup}
   subs={subs}
   setSubs={setSubs}
-  onAdd={(s: any) => setSubs([...subs, s])}
+  setLineup={setLineup}
+  currentInning={currentInning}
+  currentHalf={currentHalf}
+  onAdd={(s:any) => {
+    const idx = s.inning - 1;
+    const rec: PlayRecord = { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
+    const copy = [...records];
+    if (s.half === '表') copy[idx].top.push(rec); else copy[idx].bottom.push(rec);
+    setRecords(copy);
+  }}
 />
-
 
 {/* 交代一覧 */}
 <div className="mt-4 border p-2 rounded">
@@ -816,12 +950,7 @@ useEffect(() => {
   {subs.map((s:any, idx:number) => (
     <div key={idx} className="flex justify-between items-center mb-1 text-sm">
       <span>
-        {s.inning}回{s.half} {s.type}:
-        {s.out}
-        {s.pos ? "(" + s.pos + ")" : ""}
-        {" → "}
-        {s.in}
-        {s.pos ? "(" + s.pos + ")" : ""}
+        {s.inning}回{s.half} {s.type}:{s.out}{s.pos ? `(${s.pos})` : ''} → {s.in}{s.pos ? `(${s.pos})` : ''}
       </span>
       <button
         onClick={() => {
@@ -829,9 +958,7 @@ useEffect(() => {
           setSubs(updated);
         }}
         className="px-2 py-0.5 bg-red-500 text-white rounded text-xs"
-      >
-        削除
-      </button>
+      >削除</button>
     </div>
   ))}
 </div>
