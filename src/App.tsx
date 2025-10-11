@@ -509,8 +509,7 @@ out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join("
     }
 
 // 先発メンバー（→で交代記載、回表裏を含める）
-out += `【先発メンバー】\n`;
-lineup.forEach((p) => {
+lineup.forEach((p: any) => {
   if (!p.name) return;
   let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
   // その選手からの交代を → で連結（回表裏付き）
