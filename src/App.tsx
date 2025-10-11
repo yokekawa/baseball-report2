@@ -500,8 +500,9 @@ export default function BaseballReportApp() {
     // スコアボード
     out += ` 　  　　　/  1  2  3  4  5  6  7  /  計\n`;
     if (gameInfo.homeBatting) {
-      out += ` 【${gameInfo.away}】 / ${innings.map((i) => i.away || "").join(" ")} / ${totalAway}\n`;
-      out += ` 【${gameInfo.home}】 / ${innings.map((i) => i.home || "").join(" ")} / ${totalHome}\n\n`;
+out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n`;
+out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n\n`;
+
     } else {
       out += ` 【${gameInfo.home}】 / ${innings.map((i) => i.home || "").join(" ")} / ${totalHome}\n`;
       out += ` 【${gameInfo.away}】 / ${innings.map((i) => i.away || "").join(" ")} / ${totalAway}\n\n`;
