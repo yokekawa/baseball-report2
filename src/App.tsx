@@ -591,19 +591,19 @@ records.forEach((innRec: any, i: number) => {
     if (!bucket.length) return;
     const last = bucket.pop() as PlayRecord;
     setRecords(copy);
-
+    
     // 打順を戻す（走塁のみのプレーは advancedOrder=false なので戻さない）
     if (last.advancedOrder) {
       if (currentHalf === "表") {
-        setEnemyOrder((prev) => (prev === 1 ? 9 : prev - 1));
+        setEnemyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
       } else {
-        setAllyOrder((prev) => (prev === 1 ? 9 : prev - 1));
+        setAllyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
       }
     }
 
     // アウトカウントを戻す（アウトプレーで増えた分のみ）
     if (last.deltaOuts > 0) {
-      setCurrentOuts((prev) => Math.max(0, prev - last.deltaOuts));
+      setCurrentOuts((prev:number) => Math.max(0, prev - last.deltaOuts));
     }
   }
   
@@ -692,9 +692,9 @@ useEffect(() => {
 
           {/* 先発メンバー入力（守備重複防止） */}
           <h2 className="text-lg font-semibold mb-2">先発メンバー入力</h2>
-          {lineup.map((p, idx) => {
-            const usedNames = lineup.map((l) => l.name).filter(Boolean);
-            const usedPos = lineup.map((l) => l.pos).filter(Boolean);
+          {lineup.map((p:any, idx:number) => {
+            const usedNames = lineup.map((l:any) => l.name).filter(Boolean);
+            const usedPos = lineup.map((l:any) => l.pos).filter(Boolean);
             return (
               <div key={idx} className="flex gap-2 mb-2 items-center">
                 <span>{idx + 1}番</span>
@@ -734,7 +734,7 @@ useEffect(() => {
 
           {/* スコアボード & 投手入力 */}
           <h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
-          {innings.map((inn, idx) => (
+          {innings.map((inn:any, idx:number) => (
             <div key={idx} className="border p-2 mb-3 rounded">
               <div className="mb-1 font-bold">{idx + 1}回</div>
 
@@ -813,7 +813,7 @@ useEffect(() => {
 <div className="mt-4 border p-2 rounded">
   <h3 className="font-semibold mb-2">交代一覧</h3>
   {subs.length === 0 && <div className="text-gray-500 text-sm">（なし）</div>}
-  {subs.map((s, idx) => (
+  {subs.map((s:any, idx:number) => (
     <div key={idx} className="flex justify-between items-center mb-1 text-sm">
       <span>
         {s.inning}回{s.half} {s.type}:
@@ -825,7 +825,7 @@ useEffect(() => {
       </span>
       <button
         onClick={() => {
-          const updated = subs.filter((_, i) => i !== idx);
+          const updated = subs.filter((_:any, i:number) => i !== idx);
           setSubs(updated);
         }}
         className="px-2 py-0.5 bg-red-500 text-white rounded text-xs"
@@ -848,7 +848,16 @@ useEffect(() => {
             onAppend={(i: number, h: "表" | "裏", rec: PlayRecord) => {
               const copy = [...records];
               (h === "表" ? copy[i].top : copy[i].bottom).push(rec);
-              setRecords(copy);
+setRecords(copy);
+const saved = JSON.parse(localStorage.getItem('baseballReportData') || '{}');
+localStorage.setItem('baseballReportData', JSON.stringify({
+  ...saved,
+  records: copy
+}));
+
+
+
+              
             }}
             currentInning={currentInning}
             setCurrentInning={setCurrentInning}
