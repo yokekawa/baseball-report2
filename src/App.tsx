@@ -104,8 +104,8 @@ function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass }
 // ③ 打順反映: lineup を交代時に更新
 // ④ 代打対応: type="代打" を追加
 
-// SubForm 修正版
-function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, setLineup }: any) {
+// battingOrderState 未定義エラー修正済み SubForm
+function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, setLineup, battingOrderState, setBattingOrderState }: any) {
   const [type, setType] = useState("交代");
   const [out, setOut] = useState("");
   const [inn, setInn] = useState("");
@@ -115,7 +115,7 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   const [inning, setInning] = useState(currentInning || 1);
   const [half, setHalf] = useState(currentHalf || "表");
 
-  const currentOnField = lineup.map((l: any) => l.name).filter(Boolean);
+  const currentOnField = battingOrderState.map((l: any) => l.name).filter(Boolean);
   const canIn = type === "交代" || type === "代打"
     ? playerList.filter((p: string) => !currentOnField.includes(p) || p === inn)
     : currentOnField;
@@ -131,16 +131,16 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
     if (type === "交代" || type === "代打") {
       if (!out || !inn || !pos) return;
       const sub = { type, out, in: inn, pos, inning, half };
-      setSubs((prev:any) => [...prev, sub]);
-      const updated = lineup.map((l:any) => l.name === out ? { ...l, name: inn, pos: pos } : l);
-      setLineup(updated);
-      onAdd(sub); // ← 一度だけ呼ぶ
+      setSubs((prev: any) => [...prev, sub]);
+      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, name: inn, pos } : l);
+      setBattingOrderState(updated);
+      onAdd(sub);
     } else if (type === "守備変更") {
       if (!out || !oldPos || !newPos) return;
       const sub = { type, out, oldPos, newPos, inning, half };
-      setSubs((prev:any) => [...prev, sub]);
-      const updated = lineup.map((l:any) => l.name === out ? { ...l, pos: newPos } : l);
-      setLineup(updated);
+      setSubs((prev: any) => [...prev, sub]);
+      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, pos: newPos } : l);
+      setBattingOrderState(updated);
       onAdd(sub);
     }
 
@@ -501,10 +501,8 @@ export default function BaseballReportApp() {
     return saved ? JSON.parse(saved).innings || Array.from({ length: 7 }, makeInning) : Array.from({ length: 7 }, makeInning);
   });
 
-  const [lineup, setLineup] = useState(() => {
-    const saved = localStorage.getItem('baseballReportData');
-    return saved ? JSON.parse(saved).lineup || Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' })) : Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' }));
-  });
+const [lineup, setLineup] = useState(Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' })));
+const [battingOrderState, setBattingOrderState] = useState([...lineup]); // 打席用状態
 
   const [subs, setSubs] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
@@ -552,12 +550,12 @@ useEffect(() => {
   const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
   const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
 
-  let out = `${gameInfo.title}　${gameInfo.home}vs${gameInfo.away}\n\n`;
-  out += `◆日付　${gameInfo.date}\n\n`;
-  out += `◆場所　${gameInfo.place}\n\n`;
-  out += `◆天候　${gameInfo.weather}\n\n`;
-  out += `◆試合開始時刻 ${gameInfo.startHour}時${gameInfo.startMin}分開始\n\n`;
-  out += `◆試合終了時刻 ${gameInfo.endHour}時${gameInfo.endMin}分終了\n\n`;
+  let out = `${gameInfo.title}　${gameInfo.home}vs${gameInfo.away}\n`;
+  out += `◆日付　${gameInfo.date}\n`;
+  out += `◆場所　${gameInfo.place}\n`;
+  out += `◆天候　${gameInfo.weather}\n`;
+  out += `◆試合開始時刻 ${gameInfo.startHour}時${gameInfo.startMin}分開始\n`;
+  out += `◆試合終了時刻 ${gameInfo.endHour}時${gameInfo.endMin}分終了\n`;
   out += ` ※${gameInfo.home}　${gameInfo.homeBatting ? "後攻" : "先攻"}\n\n`;
 
   out += ` 　  　　　/  1  2  3  4  5  6  7  /  計\n`;
@@ -934,6 +932,8 @@ useEffect(() => {
   setLineup={setLineup}
   currentInning={currentInning}
   currentHalf={currentHalf}
+  battingOrderState={battingOrderState}          // ★追加
+  setBattingOrderState={setBattingOrderState}    // ★追加
   onAdd={(s:any) => {
     const idx = s.inning - 1;
     const rec: PlayRecord = { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
@@ -942,6 +942,8 @@ useEffect(() => {
     setRecords(copy);
   }}
 />
+
+
 
 {/* 交代一覧 */}
 <div className="mt-4 border p-2 rounded">
