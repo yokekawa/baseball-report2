@@ -137,6 +137,7 @@ subs.forEach((s: any) => {
   }
 });
 
+
 // 「退く選手」は出場中全員を、「入る選手」はベンチ全員を表示
 const canOut = currentOnField;
 const canIn = benchPlayers;
@@ -551,7 +552,17 @@ export default function BaseballReportApp() {
     return saved ? JSON.parse(saved).innings || Array.from({ length: 7 }, makeInning) : Array.from({ length: 7 }, makeInning);
   });
 
-const [lineup, setLineup] = useState(Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' })));
+
+const [lineup, setLineup] = useState(() => {
+  const saved = localStorage.getItem('baseballReportData');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    // 保存されたlineupが存在すればそれを使う
+    return parsed.lineup ?? Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' }));
+  }
+  return Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' }));
+});
+
 const [battingOrderState, setBattingOrderState] = useState([...lineup]); // 打席用状態
 
 // 先発入力後、battingOrderState がまだ空（誰も名前がない）なら同期する
