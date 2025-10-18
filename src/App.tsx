@@ -115,11 +115,34 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   const [inning, setInning] = useState(currentInning || 1);
   const [half, setHalf] = useState(currentHalf || "表");
 
-  const currentOnField = battingOrderState.map((l: any) => l.name).filter(Boolean);
-  const canIn = type === "交代" || type === "代打"
-    ? playerList.filter((p: string) => !currentOnField.includes(p) || p === inn)
-    : currentOnField;
+const currentOnField = (() => {
+  const active = battingOrderState.filter((l: any) => l && l.name).map((l: any) => l.name);
+  const base = lineup.filter((l: any) => l && l.name).map((l: any) => l.name);
+  let current = [...base, ...active];
 
+  subs.forEach((s: any) => {
+    if (s.type === '交代' || s.type === '代打') {
+      current = current.filter((n) => n !== s.out);
+      current.push(s.in);
+    }
+  });
+
+  return Array.from(new Set(current));
+})();
+
+const benchPlayers = playerList.filter((p: string) => !currentOnField.includes(p));
+subs.forEach((s: any) => {
+  if ((s.type === '交代' || s.type === '代打') && !benchPlayers.includes(s.out)) {
+    benchPlayers.push(s.out);
+  }
+});
+
+// 「退く選手」は出場中全員を、「入る選手」はベンチ全員を表示
+const canOut = currentOnField;
+const canIn = benchPlayers;
+  
+
+  
   function handleSubUndo() {
     if (!subs.length) return;
     const copy = [...subs];
@@ -128,11 +151,18 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   }
 
   function handleAdd() {
-    if (type === "交代" || type === "代打") {
+    if (type === "交代") {
       if (!out || !inn || !pos) return;
       const sub = { type, out, in: inn, pos, inning, half };
       setSubs((prev: any) => [...prev, sub]);
       const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, name: inn, pos } : l);
+      setBattingOrderState(updated);
+      onAdd(sub);
+    } else if (type === "代打") {
+      if (!out || !inn) return;
+      const sub = { type, out, in: inn, inning, half };
+      setSubs((prev: any) => [...prev, sub]);
+      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, name: inn } : l);
       setBattingOrderState(updated);
       onAdd(sub);
     } else if (type === "守備変更") {
@@ -156,7 +186,7 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
           <option>守備変更</option>
           <option>代打</option>
         </select>
-        {(type === "交代" || type === "代打") ? (
+        {(type === "交代")? (
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">退く選手</option>
@@ -171,16 +201,29 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
               {posList.map((p: string) => <option key={p}>{p}</option>)}
             </select>
           </>
+      ) : type === "代打" ? (
+  <>
+    <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
+      <option value="">退く選手</option>
+      {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
+    </select>
+    <select value={inn} onChange={(e) => setInn(e.target.value)} className="p-1 border rounded">
+      <option value="">入る選手</option>
+      {canIn.map((n: string) => <option key={n}>{n}</option>)}
+    </select>
+  </>
         ) : (
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">選手</option>
               {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
             </select>
-            <select value={oldPos} onChange={(e) => setOldPos(e.target.value)} className="p-1 border rounded">
-              <option value="">変更前守備</option>
-              {posList.map((p: string) => <option key={p}>{p}</option>)}
-            </select>
+<select value={oldPos} onChange={(e) => setOldPos(e.target.value)}
+  className="p-1 border rounded">
+  <option value="">変更前守備</option>
+  {[...posList, "(代打)"].map((p: string) => <option key={p}>{p}</option>)}
+</select>
+
             <select value={newPos} onChange={(e) => setNewPos(e.target.value)} className="p-1 border rounded">
               <option value="">変更後守備</option>
               {posList.map((p: string) => <option key={p}>{p}</option>)}
@@ -375,8 +418,14 @@ setOutcome("");     // 追加
   </optgroup>
   <optgroup label="外野方向">
     <option value="レフト">レフト</option>
+    <option value="レフト前">レフト前</option>
+    <option value="レフトオーバー">レフトオーバー</option>
     <option value="センター">センター</option>
+    <option value="センター前">センター前</option>
+    <option value="センターオーバー">センターオーバー</option>
     <option value="ライト">ライト</option>
+    <option value="ライト前">ライト前</option>
+    <option value="ライトオーバー">ライトオーバー</option>
     <option value="左中間">左中間</option>
     <option value="右中間">右中間</option>
   </optgroup>
@@ -398,6 +447,7 @@ setOutcome("");     // 追加
   <option value="">（選択してください）</option>
   <optgroup label="安打・長打">
     <option value="ヒット">ヒット</option>
+    <option value="内野安打">内野安打</option>
     <option value="2ベースヒット">2ベースヒット</option>
     <option value="3ベースヒット">3ベースヒット</option>
     <option value="ランニングホームラン">ランニングホームラン</option>
@@ -504,6 +554,15 @@ export default function BaseballReportApp() {
 const [lineup, setLineup] = useState(Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' })));
 const [battingOrderState, setBattingOrderState] = useState([...lineup]); // 打席用状態
 
+// 先発入力後、battingOrderState がまだ空（誰も名前がない）なら同期する
+useEffect(() => {
+  if (!battingOrderState.some((p: any) => p && p.name) && lineup.some((p: any) => p && p.name)) {
+    setBattingOrderState(lineup.map((p: any) => ({ ...p })));
+  }
+}, [lineup]); // ★依存は lineup のみ
+
+
+  
   const [subs, setSubs] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     return saved ? JSON.parse(saved).subs || [] : [];
@@ -519,10 +578,15 @@ const [battingOrderState, setBattingOrderState] = useState([...lineup]); // 打�
     return saved ? JSON.parse(saved).reportText || '' : '';
   });
 
-  const [allyOrder, setAllyOrder] = useState(() => {
-    const saved = localStorage.getItem('baseballReportData');
-    return saved ? JSON.parse(saved).allyOrder || 1 : 1;
-  });
+const [allyOrder, setAllyOrder] = useState(() => {
+  const saved = localStorage.getItem('baseballReportData');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    // localStorage に保存がある場合はそれを使用
+    return parsed.allyOrder ?? 1;
+  }
+  return 1;
+});
 
   const [enemyOrder, setEnemyOrder] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
@@ -577,11 +641,12 @@ useEffect(() => {
 
     // 出場順に右方向へ連結
     relatedSubs.forEach((s: any) => {
-      if (s.type === "守備変更") {
-        line += `→${s.out}(${s.oldPos})→${s.out}(${s.newPos})${s.inning}回${s.half}`;
-      } else {
-        line += `→${s.in}(${s.pos || ''})`;
-      }
+if (s.type === "守備変更") {
+  line += `→(${s.newPos})${s.inning}回${s.half}`;
+} else {
+  line += `→${s.in}(${s.pos || ''})`;
+}
+
     });
 
     out += line + "\n";
@@ -936,7 +1001,13 @@ useEffect(() => {
   setBattingOrderState={setBattingOrderState}    // ★追加
   onAdd={(s:any) => {
     const idx = s.inning - 1;
-    const rec: PlayRecord = { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
+const rec: PlayRecord =
+  s.type === "守備変更"
+    ? { line: `${s.type}：${s.out}(${s.oldPos})→(${s.newPos})`, deltaOuts: 0, advancedOrder: false }
+    : s.type === "代打"
+    ? { line: `${s.out}→${s.in}(代打)`, deltaOuts: 0, advancedOrder: false }
+    : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
+
     const copy = [...records];
     if (s.half === '表') copy[idx].top.push(rec); else copy[idx].bottom.push(rec);
     setRecords(copy);
@@ -952,15 +1023,35 @@ useEffect(() => {
   {subs.map((s:any, idx:number) => (
     <div key={idx} className="flex justify-between items-center mb-1 text-sm">
       <span>
-        {s.inning}回{s.half} {s.type}:{s.out}{s.pos ? `(${s.pos})` : ''} → {s.in}{s.pos ? `(${s.pos})` : ''}
+        {s.inning}回{s.half} {s.type}:{s.out}{s.type === '守備変更' ? `(${s.oldPos})→(${s.newPos})` : s.pos ? `(${s.pos})→${s.in}(${s.pos})` : ''}
       </span>
-      <button
-        onClick={() => {
-          const updated = subs.filter((_:any, i:number) => i !== idx);
-          setSubs(updated);
-        }}
-        className="px-2 py-0.5 bg-red-500 text-white rounded text-xs"
-      >削除</button>
+<button
+  onClick={() => {
+    const updated = subs.filter((_: any, i: number) => i !== idx);
+    setSubs(updated);
+
+    // 打席結果からも該当の交代行を削除
+    const copy = [...records];
+    copy.forEach((inn: any) => {
+      inn.top = inn.top.filter(
+        (r: any) => !r.line.includes(s.out) && !r.line.includes(s.in)
+      );
+      inn.bottom = inn.bottom.filter(
+        (r: any) => !r.line.includes(s.out) && !r.line.includes(s.in)
+      );
+    });
+    setRecords(copy);
+
+    // localStorage も更新
+    const saved = JSON.parse(localStorage.getItem("baseballReportData") || "{}");
+    localStorage.setItem(
+      "baseballReportData",
+      JSON.stringify({ ...saved, subs: updated, records: copy })
+    );
+  }}
+  className="px-2 py-0.5 bg-red-500 text-white rounded text-xs"
+>削除</button>
+
     </div>
   ))}
 </div>
@@ -1016,18 +1107,34 @@ localStorage.setItem('baseballReportData', JSON.stringify({
             📋 コピー
           </button>
 
+
 <button
   onClick={() => {
     if (window.confirm('打席記録をすべて削除します。よろしいですか？')) {
       if (window.confirm('本当によろしいですか？')) {
         const clearedRecords = Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
+        const clearedInnings = Array.from({ length: 7 }, makeInning);
         setRecords(clearedRecords);
+        setInnings(clearedInnings);
+        setCurrentInning(1);
+        setCurrentHalf('表');
+        setCurrentOuts(0);
+        setAllyOrder(1);
+        setEnemyOrder(1);
+
         const saved = JSON.parse(localStorage.getItem('baseballReportData') || '{}');
         localStorage.setItem('baseballReportData', JSON.stringify({
           ...saved,
-          records: clearedRecords
+          innings: clearedInnings,
+          records: clearedRecords,
+          currentInning: 1,
+          currentHalf: '表',
+          currentOuts: 0,
+          allyOrder: 1,
+          enemyOrder: 1,
         }));
-        alert('打席記録をすべて削除しました。');
+
+        alert('打席記録・得点・投球数・現在回情報をすべて初期化しました。');
       }
     }
   }}
@@ -1035,6 +1142,8 @@ localStorage.setItem('baseballReportData', JSON.stringify({
 >
   🗑 打席記録削除
 </button>
+
+
 
           
         </div>
