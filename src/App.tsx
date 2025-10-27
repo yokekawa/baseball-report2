@@ -25,45 +25,49 @@ type InningRow = {
 const makeInning = (): InningRow => ({
   away: "",
   home: "",
-  awayPitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
-  homePitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
+  awayPitchers: [{ pitchThis: "", pitchTotal: "" }],
+  homePitchers: [{ pitchThis: "", pitchTotal: "" }],
 });
 
 const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}[], isOpponent: boolean) =>
   list
-    .map((p) => {
-      if (p.name || p.pitchThis || p.pitchTotal) {
-        const t = p.pitchThis || "";
-        const T = p.pitchTotal || "";
-        const slash = t && T ? "/" : "";
-        const label = isOpponent ? `相手投手 ${p.name}` : p.name;
-        return `${label}　投球数　${t}${slash}${T}球\n`;
-      }
-      return "";
-    })
+.map((p) => {
+  if (!p.pitchThis && !p.pitchTotal) return "";
+  const t = p.pitchThis || "";
+  const T = p.pitchTotal || "";
+  const slash = t && T ? "/" : "";
+  const label = isOpponent ? `相手投手` : p.name;
+  return `${label}　投球数　${t}${slash}${T}球\n`;
+})
     .join("");
 
 // ===== コンポーネント =====
-function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass }: any) {
+function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, isOpponent }: any) {
   return (
     <div className="mt-1 ml-4">
       <span>{label}</span>
       {pitchers.map((p: any, j: number) => (
         <div key={j} className="flex gap-2 mb-1 items-center">
-          <select
-            value={p.name}
-            onChange={(e) => {
-              const copy = [...pitchers];
-              copy[j].name = e.target.value;
-              setPitchers(copy);
-            }}
-            className="p-1 border rounded"
-          >
-            <option value="">投手</option>
-            {playerList.map((n: string) => (
-              <option key={n}>{n}</option>
-            ))}
-          </select>
+   {isOpponent ? (
+     <span className="px-2 py-1 text-gray-700">
+       相手投手
+     </span>
+   ) : (
+     <select
+       value={p.name}
+       onChange={(e) => {
+         const copy = [...pitchers];
+         copy[j].name = e.target.value;
+         setPitchers(copy);
+       }}
+       className="p-1 border rounded"
+     >
+       <option value="">投手</option>
+       {playerList.map((n: string) => (
+         <option key={n}>{n}</option>
+       ))}
+     </select>
+   )}
           <input
             type="number"
             placeholder="回の球数"
@@ -92,17 +96,11 @@ function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass }
         onClick={() => setPitchers([...pitchers, { name: "", pitchThis: "", pitchTotal: "" }])}
         className={`mt-1 px-2 py-1 rounded ${buttonClass}`}
       >
-        ＋投手追加
+        {isOpponent ? "＋相手投手追加" : "＋投手追加"}
       </button>
     </div>
   );
 }
-
-// 修正ポイントまとめ
-// ① 重複表示防止: レポート生成内の subs.forEach(...) による records 追加を削除
-// ② 途中交代対応: SubForm に currentInning/currentHalf を渡し、handleAdd で利用
-// ③ 打順反映: lineup を交代時に更新
-// ④ 代打対応: type="代打" を追加
 
 // battingOrderState 未定義エラー修正済み SubForm
 function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, setLineup, battingOrderState, setBattingOrderState }: any) {
@@ -131,18 +129,10 @@ const currentOnField = (() => {
 })();
 
 const benchPlayers = playerList.filter((p: string) => !currentOnField.includes(p));
-subs.forEach((s: any) => {
-  if ((s.type === '交代' || s.type === '代打') && !benchPlayers.includes(s.out)) {
-    benchPlayers.push(s.out);
-  }
-});
-
 
 // 「退く選手」は出場中全員を、「入る選手」はベンチ全員を表示
 const canOut = currentOnField;
 const canIn = benchPlayers;
-  
-
   
   function handleSubUndo() {
     if (!subs.length) return;
@@ -262,37 +252,15 @@ function AtBatForm({
   setCurrentOuts,
   onUndo,
 }: any) {
-  const [result, setResult] = useState("");
   const [freeText, setFreeText] = useState("");
   const [bases, setBases] = useState("なし");
   const [selectedOuts, setSelectedOuts] = useState(currentOuts);
   const [extraPlay, setExtraPlay] = useState("");
   const [selectedAllyOrder, setSelectedAllyOrder] = useState<number>(allyOrder);
   const [selectedEnemyOrder, setSelectedEnemyOrder] = useState<number>(enemyOrder);
-// 追加（ここから）
-const [direction, setDirection] = useState("");
-const [outcome, setOutcome] = useState("");
-// 追加（ここまで）
+  const [direction, setDirection] = useState("");
+  const [outcome, setOutcome] = useState("");
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
-
-  const options: Record<string, string[]> = {
-    三振: ["空振り三振", "見逃し三振"],
-    内野ゴロ: ["ピッチャーゴロ", "ファーストゴロ", "セカンドゴロ", "サードゴロ", "ショートゴロ"],
-    内野フライ:["ピッチャーフライ","キャッチャーフライ","ファーストフライ","セカンドフライ","サードフライ",
-"ショートフライ"],
-    ファールフライ:["ファーストファールフライ","セカンドファールフライ","サードファールフライ","キャッチャーファールフライ","レフトファールフライ","ライトファールフライ"],
-    外野ゴロ: ["ライトゴロ", "センターゴロ", "レフトゴロ"],
-    外野フライ: ["レフトフライ", "センターフライ", "ライトフライ"],
-    犠牲フライ:["ライト犠牲フライ","センター犠牲フライ","レフト犠牲フライ"],
-    ヒット: ["レフト前ヒット", "センター前ヒット", "ライト前ヒット"],
-    内野安打:["ショート内野安打","サード内野安打","セカンド内野安打","ファースト内野安打","ピッチャー内野安打","キャッチャー内野安打"],
-    長打: ["レフトオーバー2ベースヒット", "センターオーバー2ベースヒット", "ライトオーバー2ベースヒット", "スリーベースヒット", "ランニング3ラン"],
-    四死球: ["四球", "死球", "敬遠"],
-    エラー: ["ショートエラー","サードエラー","セカンドエラー","ファーストエラー","ピッチャーエラー","キャッチャーエラー","レフトエラー","センターエラー","ライトエラー"],
-    バント小技: ["送りバント", "セーフティバント", "スクイズ",],
-    その他: ["フィルダースチョイス", "打撃妨害", "キャッチャーインターフェア"],
-  };
-
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
 
@@ -311,13 +279,15 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
     if (extraPlay) {
       // 走塁プレー: 味方なら全角4スペース、相手なら全角2スペース
       const indent = battingNowIsAlly ? "　　　　" : "　　";
-      line = `${indent}${text}　${outsToUse}out`;
+      line = `${indent}${text}　${outsToUse}死`;
     } else {
       const prefix = battingNowIsAlly ? `${useOrder}.${name}` : `${useOrder}.`;
-      line = `${prefix}${prefix ? "　" : ""}${text}　${outsToUse}out`;
+      line = `${prefix}${prefix ? "　" : ""}${text}　${outsToUse}死`;
     }
 
     if (outsToUse === 3) {
+      // 「3死」を削除してチェンジのみを表示
+      line = line.replace(/3死$/, "");
       line += "チェンジ";
     } else {
       line += bases === "なし" ? "" : ` ${bases}`;
@@ -355,12 +325,11 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
     }
 
     // クリア
-setResult("");
 setFreeText("");
 setBases("なし");
 setExtraPlay("");
-setDirection("");   // 追加
-setOutcome("");     // 追加
+setDirection("");
+setOutcome("");
 
   }
 
@@ -540,6 +509,22 @@ setOutcome("");     // 追加
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
   const playerList = DEFAULT_PLAYERS;
+  // subs の履歴から最新の出場状態を再構築する関数
+  function rebuildBattingOrderState(lineup: any, subs: any) {
+    let state = lineup.map((p: any) => ({ ...p }));
+    subs.forEach((s: any) => {
+      if (s.type === "交代" || s.type === "代打") {
+        state = state.map((l: any) =>
+          l.name === s.out ? { ...l, name: s.in, pos: s.pos ?? l.pos } : l
+        );
+      } else if (s.type === "守備変更") {
+        state = state.map((l: any) =>
+          l.name === s.out ? { ...l, pos: s.newPos } : l
+        );
+      }
+    });
+    return state;
+  }
 
   const [gameInfo, setGameInfo] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
@@ -571,14 +556,17 @@ useEffect(() => {
     setBattingOrderState(lineup.map((p: any) => ({ ...p })));
   }
 }, [lineup]); // ★依存は lineup のみ
-
-
   
   const [subs, setSubs] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     return saved ? JSON.parse(saved).subs || [] : [];
   });
-
+  
+// subs の変更時に出場状態を再構築
+useEffect(() => {
+  setBattingOrderState(rebuildBattingOrderState(lineup, subs));
+}, [subs, lineup]);
+  
   const [records, setRecords] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     return saved ? JSON.parse(saved).records || Array.from({ length: 7 }, () => ({ top: [], bottom: [] })) : Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
@@ -633,63 +621,94 @@ useEffect(() => {
   out += `◆試合終了時刻 ${gameInfo.endHour}時${gameInfo.endMin}分終了\n`;
   out += ` ※${gameInfo.home}　${gameInfo.homeBatting ? "後攻" : "先攻"}\n\n`;
 
-  out += ` 　  　　　/  1  2  3  4  5  6  7  /  計\n`;
+  out += ` 　  　　　/1234567/計\n`;
   if (gameInfo.homeBatting) {
-    out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n`;
-    out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n\n`;
+    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join(" ")} /${totalAway}\n`;
+    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join(" ")} /${totalHome}\n\n`;
   } else {
-    out += ` 【${gameInfo.home}】 / ${innings.map((i: any) => i.home || "").join(" ")} / ${totalHome}\n`;
-    out += ` 【${gameInfo.away}】 / ${innings.map((i: any) => i.away || "").join(" ")} / ${totalAway}\n\n`;
+    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join(" ")} /${totalHome}\n`;
+    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join(" ")} /${totalAway}\n\n`;
   }
 
-  out += `【先発メンバー】\n`;
-  lineup.forEach((p: any) => {
-    if (!p.name) return;
-    let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
+out += `【先発メンバー】\n`;
 
-    // 同じ選手または後に交代で関係する選手を抽出
-    const relatedSubs = subs.filter((s: any) => s.out === p.name || s.prev === p.name || s.original === p.name || s.in === p.name);
+lineup.forEach((p: any) => {
+  if (!p.name) return;
 
-    // 出場順に右方向へ連結
-    relatedSubs.forEach((s: any) => {
-if (s.type === "守備変更") {
-  line += `→(${s.newPos})${s.inning}回${s.half}`;
-} else {
-  line += `→${s.in}(${s.pos || ''})`;
-}
+  // 先発行の基本
+  let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
 
-    });
+  // 現在の出場選手を追跡（交代チェーンに対応）
+  let currentName = p.name;
+  let currentPos = p.pos;
 
-    out += line + "\n";
+  // subs は時系列順なのでそのまま走査でOK
+  subs.forEach((s: any) => {
+    if (s.type === "交代" && s.out === currentName) {
+      // → 交代： 例）→3回裏 武田一(三)
+      line += `→${s.inning}回${s.half} ${s.in}(${s.pos})`;
+      currentName = s.in;
+      currentPos = s.pos;
+    } else if (s.type === "代打" && s.out === currentName) {
+      // → 代打： 例）→3回表 野路(代打)
+      line += `→${s.inning}回${s.half} ${s.in}(代打)`;
+      currentName = s.in; // 代打後の選手がそのまま残る前提
+    } else if (s.type === "守備変更" && s.out === currentName) {
+      // → 守備変更：例）(三)→(一)
+      line += `→${s.inning}回${s.half}(${s.newPos})`;
+      currentPos = s.newPos;
+    }
   });
-  out += `\n`;
+
+  out += line + "\n";
+});
+
+out += `\n`;
+
 
   records.forEach((innRec: any, i: number) => {
     const n = i + 1;
-    if (innRec.top.length) {
-      out += `◆${n}回表\n`;
-      innRec.top.forEach((r: any) => (out += r.line + "\n"));
-      const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
-      if (runsTop !== "") {
-        const labelTop = gameInfo.homeBatting ? "失点" : "得点";
-        out += `★この回${runsTop}${labelTop}\n`;
-      }
-      out += renderPitchers(innings[i].awayPitchers || [], false);
-      out += `\n`;
+const allyPitchers = gameInfo.homeBatting
+  ? innings[i].homePitchers
+  : innings[i].awayPitchers;
+const oppPitchers = gameInfo.homeBatting
+  ? innings[i].awayPitchers
+  : innings[i].homePitchers; 
+    const weAreHome = gameInfo.homeBatting;
+    const homeTeamPitchers = innings[i].homePitchers;
+    const awayTeamPitchers = innings[i].awayPitchers;
+    if (innRec.top.length) {     
+out += `●${n}回表\n`;
+innRec.top.forEach((r: any) => (out += r.line + "\n"));
+
+const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
+if (runsTop !== "") {
+  const labelTop = gameInfo.homeBatting ? "失点" : "得点";
+  out += `この回${runsTop}${labelTop}\n`;
+}
+
+const pitchersTop = weAreHome ? awayTeamPitchers : homeTeamPitchers;
+const topIsOpponent = (!weAreHome); 
+out += renderPitchers(pitchersTop, topIsOpponent);
+
+out += `\n`;
     }
     if (innRec.bottom.length) {
-      out += `◆${n}回裏\n`;
-      innRec.bottom.forEach((r: any) => (out += r.line + "\n"));
-      const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
-      if (runsBottom !== "") {
-        const labelBottom = gameInfo.homeBatting ? "得点" : "失点";
-        out += `★この回${runsBottom}${labelBottom}\n`;
-      }
-      out += renderPitchers(innings[i].homePitchers || [], true);
-      out += `\n`;
+out += `●${n}回裏\n`;
+innRec.bottom.forEach((r: any) => (out += r.line + "\n"));
+
+const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
+if (runsBottom !== "") {
+  const labelBottom = gameInfo.homeBatting ? "得点" : "失点";
+  out += `この回${runsBottom}${labelBottom}\n`;
+}
+const pitchersBottom = weAreHome ? homeTeamPitchers : awayTeamPitchers;
+const bottomIsOpponent = (weAreHome);
+out += renderPitchers(pitchersBottom, bottomIsOpponent);
+out += `\n`;
+out += `\n`;
     }
   });
-
   setReportText(out);
 }, [gameInfo, innings, lineup, subs, records]);
 
@@ -722,7 +741,7 @@ function handleUndo() {
         return;
       }
     }
-    return; // どちらにも戻せない場合
+    return; 
   }
 
   const last = bucket.pop() as PlayRecord;
@@ -902,6 +921,7 @@ useEffect(() => {
             }}
             playerList={playerList}
             buttonClass="bg-blue-100"
+            isOpponent={false}
           />
         </div>
 
@@ -931,6 +951,7 @@ useEffect(() => {
             }}
             playerList={playerList}
             buttonClass="bg-green-100"
+            isOpponent={true}
           />
         </div>
       </>
@@ -962,6 +983,7 @@ useEffect(() => {
             }}
             playerList={playerList}
             buttonClass="bg-green-100"
+            isOpponent={true}
           />
         </div>
 
@@ -991,6 +1013,7 @@ useEffect(() => {
             }}
             playerList={playerList}
             buttonClass="bg-blue-100"
+            isOpponent={false}
           />
         </div>
       </>
@@ -1008,8 +1031,8 @@ useEffect(() => {
   setLineup={setLineup}
   currentInning={currentInning}
   currentHalf={currentHalf}
-  battingOrderState={battingOrderState}          // ★追加
-  setBattingOrderState={setBattingOrderState}    // ★追加
+  battingOrderState={battingOrderState}
+  setBattingOrderState={setBattingOrderState}
   onAdd={(s:any) => {
     const idx = s.inning - 1;
 const rec: PlayRecord =
@@ -1025,8 +1048,6 @@ const rec: PlayRecord =
   }}
 />
 
-
-
 {/* 交代一覧 */}
 <div className="mt-4 border p-2 rounded">
   <h3 className="font-semibold mb-2">交代一覧</h3>
@@ -1039,7 +1060,8 @@ const rec: PlayRecord =
 <button
   onClick={() => {
     const updated = subs.filter((_: any, i: number) => i !== idx);
-    setSubs(updated);
+setSubs(updated);
+setBattingOrderState(rebuildBattingOrderState(lineup, updated));
 
     // 打席結果からも該当の交代行を削除
     const copy = [...records];
@@ -1067,7 +1089,6 @@ const rec: PlayRecord =
   ))}
 </div>
 
-
           {/* 打席入力フォーム */}
           <AtBatForm
             lineup={lineup}
@@ -1086,9 +1107,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   records: copy
 }));
 
-
-
-              
             }}
             currentInning={currentInning}
             setCurrentInning={setCurrentInning}
@@ -1117,7 +1135,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
           >
             📋 コピー
           </button>
-
 
 <button
   onClick={() => {
@@ -1153,10 +1170,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
 >
   🗑 打席記録削除
 </button>
-
-
-
-          
         </div>
       </div>
     </div>
