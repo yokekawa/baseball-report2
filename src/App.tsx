@@ -43,56 +43,61 @@ const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}
 
 // ===== コンポーネント =====
 function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, isOpponent }: any) {
-  return (
-    <div className="mt-1 ml-4">
-      <span>{label}</span>
+return (
+    <div className="ml-3 text-sm">
+      <div className="font-medium">{label}</div>
+
       {pitchers.map((p: any, j: number) => (
-        <div key={j} className="flex gap-2 mb-1 items-center">
-    {!isOpponent && (
-     <select
-       value={p.name}
-       onChange={(e) => {
-         const copy = [...pitchers];
-         copy[j].name = e.target.value;
-         setPitchers(copy);
-       }}
-       className="p-1 border rounded"
-     >
-       <option value="">投手</option>
-       {playerList.map((n: string) => (
-         <option key={n}>{n}</option>
-       ))}
-     </select>
-   )}
+        <div key={j} className="flex items-center gap-2 mb-1">
+
+          {!isOpponent && (
+            <select
+              value={p.name}
+              onChange={(e) => {
+                const copy = [...pitchers];
+                copy[j].name = e.target.value;
+                setPitchers(copy);
+              }}
+              className="border rounded px-1"
+            >
+              <option value="">投手</option>
+              {playerList.map((n: string) => <option key={n}>{n}</option>)}
+            </select>
+          )}
+
           <input
             type="number"
-            placeholder="回の球数"
             value={p.pitchThis}
+            placeholder="球"
             onChange={(e) => {
               const copy = [...pitchers];
               copy[j].pitchThis = e.target.value;
               setPitchers(copy);
             }}
-            className="w-20 p-1 border rounded"
+            className="w-12 border rounded px-1"
           />
+
+          <span>/</span>
+
           <input
             type="number"
-            placeholder="累計球数"
             value={p.pitchTotal}
+            placeholder="累計"
             onChange={(e) => {
               const copy = [...pitchers];
               copy[j].pitchTotal = e.target.value;
               setPitchers(copy);
             }}
-            className="w-20 p-1 border rounded"
+            className="w-14 border rounded px-1"
           />
         </div>
       ))}
+
       <button
         onClick={() => setPitchers([...pitchers, { name: "", pitchThis: "", pitchTotal: "" }])}
-        className={`mt-1 px-2 py-1 rounded ${buttonClass}`}
+        className={`px-1 py-0.5 text-xs rounded ${buttonClass}`}
       >
-        {isOpponent ? "＋相手投手追加" : "＋投手追加"}
+        ＋投手
       </button>
     </div>
   );
