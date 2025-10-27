@@ -25,8 +25,8 @@ type InningRow = {
 const makeInning = (): InningRow => ({
   away: "",
   home: "",
-  awayPitchers: [{ pitchThis: "", pitchTotal: "" }],
-  homePitchers: [{ pitchThis: "", pitchTotal: "" }],
+  awayPitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
+  homePitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
 });
 
 const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}[], isOpponent: boolean) =>
