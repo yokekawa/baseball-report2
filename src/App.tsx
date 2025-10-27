@@ -48,11 +48,7 @@ function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, 
       <span>{label}</span>
       {pitchers.map((p: any, j: number) => (
         <div key={j} className="flex gap-2 mb-1 items-center">
-   {isOpponent ? (
-     <span className="px-2 py-1 text-gray-700">
-       相手投手
-     </span>
-   ) : (
+    {!isOpponent && (
      <select
        value={p.name}
        onChange={(e) => {
@@ -102,8 +98,8 @@ function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, 
   );
 }
 
-// battingOrderState 未定義エラー修正済み SubForm
-function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, setLineup, battingOrderState, setBattingOrderState }: any) {
+// SubForm
+function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, battingOrderState, setBattingOrderState }: any) {
   const [type, setType] = useState("交代");
   const [out, setOut] = useState("");
   const [inn, setInn] = useState("");
@@ -130,7 +126,7 @@ const currentOnField = (() => {
 
 const benchPlayers = playerList.filter((p: string) => !currentOnField.includes(p));
 
-// 「退く選手」は出場中全員を、「入る選手」はベンチ全員を表示
+// 「退く選手」、「入る選手」を表示
 const canOut = currentOnField;
 const canIn = benchPlayers;
   
@@ -277,7 +273,7 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
 
     let line = "";
     if (extraPlay) {
-      // 走塁プレー: 味方なら全角4スペース、相手なら全角2スペース
+      // 走塁プレー
       const indent = battingNowIsAlly ? "　　　　" : "　　";
       line = `${indent}${text}　${outsToUse}死`;
     } else {
@@ -286,7 +282,6 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
     }
 
     if (outsToUse === 3) {
-      // 「3死」を削除してチェンジのみを表示
       line = line.replace(/3死$/, "");
       line += "チェンジ";
     } else {
@@ -295,7 +290,7 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
 
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
-    const advancedOrder = !extraPlay; // 走塁プレーは false（打順進めない）
+    const advancedOrder = !extraPlay; 
     onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder });
 
     // 打順を進める（走塁のみは進めない）
@@ -665,7 +660,9 @@ lineup.forEach((p: any) => {
 
 out += `\n`;
 
-
+const starter = lineup.find((p: any) => p.pos === "投");
+out += `※八王子先発　${starter.name}\n\n`;
+  
   records.forEach((innRec: any, i: number) => {
     const n = i + 1;
 const allyPitchers = gameInfo.homeBatting
@@ -1028,7 +1025,6 @@ useEffect(() => {
   lineup={lineup}
   subs={subs}
   setSubs={setSubs}
-  setLineup={setLineup}
   currentInning={currentInning}
   currentHalf={currentHalf}
   battingOrderState={battingOrderState}
