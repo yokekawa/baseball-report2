@@ -114,7 +114,7 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   const [inning, setInning] = useState(currentInning || 1);
   const [half, setHalf] = useState(currentHalf || "表");
 
-const currentOnField = (() => {
+const FielderNow = (() => {
   const active = battingOrderState.filter((l: any) => l && l.name).map((l: any) => l.name);
   const base = lineup.filter((l: any) => l && l.name).map((l: any) => l.name);
   let current = [...base, ...active];
@@ -129,18 +129,11 @@ const currentOnField = (() => {
   return Array.from(new Set(current));
 })();
 
-const benchPlayers = playerList.filter((p: string) => !currentOnField.includes(p));
+const benchPlayers = playerList.filter((p: string) => !FielderNow.includes(p));
 
 // 「退く選手」、「入る選手」を表示
-const canOut = currentOnField;
+const canOut = FielderNow;
 const canIn = benchPlayers;
-  
-  function handleSubUndo() {
-    if (!subs.length) return;
-    const copy = [...subs];
-    copy.pop();
-    setSubs(copy);
-  }
 
   function handleAdd() {
     if (type === "交代") {
@@ -182,7 +175,7 @@ const canIn = benchPlayers;
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">退く選手</option>
-              {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
+              {FielderNow.map((n: string) => <option key={n}>{n}</option>)}
             </select>
             <select value={inn} onChange={(e) => setInn(e.target.value)} className="p-1 border rounded">
               <option value="">入る選手</option>
@@ -197,7 +190,7 @@ const canIn = benchPlayers;
   <>
     <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
       <option value="">退く選手</option>
-      {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
+      {FielderNow.map((n: string) => <option key={n}>{n}</option>)}
     </select>
     <select value={inn} onChange={(e) => setInn(e.target.value)} className="p-1 border rounded">
       <option value="">入る選手</option>
@@ -208,7 +201,7 @@ const canIn = benchPlayers;
           <>
             <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
               <option value="">選手</option>
-              {currentOnField.map((n: string) => <option key={n}>{n}</option>)}
+              {FielderNow.map((n: string) => <option key={n}>{n}</option>)}
             </select>
 <select value={oldPos} onChange={(e) => setOldPos(e.target.value)}
   className="p-1 border rounded">
@@ -230,7 +223,6 @@ const canIn = benchPlayers;
           <option>裏</option>
         </select>
         <button onClick={handleAdd} className="px-3 py-1 bg-blue-600 text-white rounded">追加</button>
-        <button onClick={handleSubUndo} className="px-3 py-1 bg-red-500 text-white rounded">取り消し</button>
       </div>
     </div>
   );
@@ -254,6 +246,7 @@ function AtBatForm({
   onUndo,
 }: any) {
   const [freeText, setFreeText] = useState("");
+  const [note, setNote] = useState("");
   const [bases, setBases] = useState("なし");
   const [selectedOuts, setSelectedOuts] = useState(currentOuts);
   const [extraPlay, setExtraPlay] = useState("");
@@ -270,6 +263,7 @@ function AtBatForm({
   useEffect(() => { setSelectedEnemyOrder(enemyOrder); }, [enemyOrder, currentHalf, currentInning]);
 
   function handleAppend() {
+    
     const useOrder = battingNowIsAlly ? selectedAllyOrder : selectedEnemyOrder;
     const name = battingNowIsAlly ? (lineup[(useOrder - 1) % 9]?.name || "打者") : "";
 
@@ -293,6 +287,7 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
       line += bases === "なし" ? "" : ` ${bases}`;
     }
 
+    
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
@@ -333,8 +328,32 @@ setOutcome("");
 
   }
 
+  const [ft, setFt] = useState("");
+  function addNote() {
+    if (!ft.trim()) return;
+    const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
+    const rec = { line: `※${ft.trim()}`, deltaOuts: 0, advancedOrder: false };
+    onAppend(idx, currentHalf, rec);
+    setFt("");
+  }
+
   return (
     <div className="rounded-lg border p-3 bg-slate-50">
+      <div className="flex gap-2 mb-2">
+        <input
+          value={ft}
+          onChange={(e) => setFt(e.target.value)}
+          placeholder="自由記載（例：相手投手右投げ遅め）"
+          className="flex-1 p-2 border rounded"
+        />
+        <button
+          onClick={addNote}
+          className="px-2 py-1 bg-green-600 text-white rounded"
+        >
+          ＋自由記載
+        </button>
+      </div>
+      
       <div className="mb-2 font-bold">
         現在：{currentInning}回{currentHalf} |
         {battingNowIsAlly
@@ -502,6 +521,7 @@ setOutcome("");
       <button onClick={onUndo} className="w-full px-3 py-2 bg-red-600 text-white rounded mt-2">
         1プレイ戻す
       </button>
+      
     </div>
   );
 }
@@ -639,24 +659,24 @@ lineup.forEach((p: any) => {
   let line = `${p.order}.${p.name}${p.pos ? `(${p.pos})` : ""}`;
 
   // 現在の出場選手を追跡（交代チェーンに対応）
-  let currentName = p.name;
-  let currentPos = p.pos;
+  let NameNow = p.name;
+  let PosNow = p.pos;
 
   // subs は時系列順なのでそのまま走査でOK
   subs.forEach((s: any) => {
-    if (s.type === "交代" && s.out === currentName) {
+    if (s.type === "交代" && s.out === NameNow) {
       // → 交代： 例）→3回裏 武田一(三)
       line += `→${s.inning}回${s.half} ${s.in}(${s.pos})`;
-      currentName = s.in;
-      currentPos = s.pos;
-    } else if (s.type === "代打" && s.out === currentName) {
+      NameNow = s.in;
+      PosNow = s.pos;
+    } else if (s.type === "代打" && s.out === NameNow) {
       // → 代打： 例）→3回表 野路(代打)
       line += `→${s.inning}回${s.half} ${s.in}(代打)`;
-      currentName = s.in; // 代打後の選手がそのまま残る前提
-    } else if (s.type === "守備変更" && s.out === currentName) {
+      NameNow = s.in; // 代打後の選手がそのまま残る前提
+    } else if (s.type === "守備変更" && s.out === NameNow) {
       // → 守備変更：例）(三)→(一)
       line += `→${s.inning}回${s.half}(${s.newPos})`;
-      currentPos = s.newPos;
+      PosNow = s.newPos;
     }
   });
 
