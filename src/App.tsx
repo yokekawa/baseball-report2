@@ -332,7 +332,7 @@ setOutcome("");
   function addNote() {
     if (!ft.trim()) return;
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
-    const rec = { line: `※${ft.trim()}`, deltaOuts: 0, advancedOrder: false };
+    const rec = { line: `${ft.trim()}`, deltaOuts: 0, advancedOrder: false };
     onAppend(idx, currentHalf, rec);
     setFt("");
   }
@@ -350,7 +350,7 @@ setOutcome("");
           onClick={addNote}
           className="px-2 py-1 bg-green-600 text-white rounded"
         >
-          ＋自由記載
+          追加
         </button>
       </div>
       
