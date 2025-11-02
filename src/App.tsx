@@ -231,6 +231,7 @@ const canIn = benchPlayers;
 // 打席入力フォーム
 function AtBatForm({
   lineup,
+  battingOrderState,
   allyOrder,
   setAllyOrder,
   enemyOrder,
@@ -250,8 +251,6 @@ function AtBatForm({
   const [bases, setBases] = useState("なし");
   const [selectedOuts, setSelectedOuts] = useState(currentOuts);
   const [extraPlay, setExtraPlay] = useState("");
-  const [selectedAllyOrder, setSelectedAllyOrder] = useState<number>(allyOrder);
-  const [selectedEnemyOrder, setSelectedEnemyOrder] = useState<number>(enemyOrder);
   const [direction, setDirection] = useState("");
   const [outcome, setOutcome] = useState("");
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
@@ -259,15 +258,13 @@ function AtBatForm({
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
 
   useEffect(() => { setSelectedOuts(currentOuts); }, [currentInning, currentHalf, currentOuts]);
-  useEffect(() => { setSelectedAllyOrder(allyOrder); }, [allyOrder, currentHalf, currentInning]);
-  useEffect(() => { setSelectedEnemyOrder(enemyOrder); }, [enemyOrder, currentHalf, currentInning]);
 
   function handleAppend() {
     
-    const useOrder = battingNowIsAlly ? selectedAllyOrder : selectedEnemyOrder;
-    const name = battingNowIsAlly ? (lineup[(useOrder - 1) % 9]?.name || "打者") : "";
+    const useOrder = battingNowIsAlly ? allyOrder : enemyOrder;
+    const name = battingNowIsAlly ? (battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
 
-const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
+    const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
 
     let line = "";
@@ -296,12 +293,10 @@ const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (fr
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
       const next = (useOrder % 9) + 1;
-      if (battingNowIsAlly) {
+if (battingNowIsAlly) {
         setAllyOrder(next);
-        setSelectedAllyOrder(next);
       } else {
         setEnemyOrder(next);
-        setSelectedEnemyOrder(next);
       }
     }
 
@@ -355,18 +350,24 @@ setOutcome("");
       </div>
       
       <div className="mb-2 font-bold">
-        現在：{currentInning}回{currentHalf} |
-        {battingNowIsAlly
-          ? ` 味方 ${selectedAllyOrder}番 ${lineup[(selectedAllyOrder - 1) % 9]?.name || "打者"}`
-          : ` 相手 ${selectedEnemyOrder}番打者`}
+        現在：{currentInning}回{currentHalf} | {battingNowIsAlly ? (
+    <>
+      味方 {allyOrder}番 {battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}
+    </>
+  ) : (
+    <>
+      相手 {enemyOrder}番打者
+    </>
+  )}
       </div>
 
       <div className="mb-3 flex items-center gap-2 text-sm">
         <label className="text-gray-600">打順を選択</label>
+
         {battingNowIsAlly ? (
           <select
-            value={selectedAllyOrder}
-            onChange={(e) => setSelectedAllyOrder(parseInt(e.target.value, 10))}
+            value={allyOrder}
+            onChange={(e) => setAllyOrder(parseInt(e.target.value, 10))}
             className="p-1 border rounded"
           >
             {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
@@ -375,8 +376,8 @@ setOutcome("");
           </select>
         ) : (
           <select
-            value={selectedEnemyOrder}
-            onChange={(e) => setSelectedEnemyOrder(parseInt(e.target.value, 10))}
+            value={enemyOrder}
+            onChange={(e) => setEnemyOrder(parseInt(e.target.value, 10))}
             className="p-1 border rounded"
           >
             {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
@@ -385,8 +386,10 @@ setOutcome("");
           </select>
         )}
         {battingNowIsAlly && (
-          <span className="text-gray-500">（{lineup[(selectedAllyOrder - 1) % 9]?.name || "打者"}）</span>
+          <span className="text-gray-500">（{battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}）</span>
         )}
+
+        
       </div>
 
 <label className="block text-sm mb-1">打球方向</label>
@@ -528,6 +531,8 @@ setOutcome("");
 
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
+  
+
   const playerList = DEFAULT_PLAYERS;
   // subs の履歴から最新の出場状態を再構築する関数
   function rebuildBattingOrderState(lineup: any, subs: any) {
@@ -686,9 +691,10 @@ lineup.forEach((p: any) => {
 out += `\n`;
 
 const starter = lineup.find((p: any) => p.pos === "投");
-out += `※八王子先発　${starter.name}\n\n`;
+out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
   
   records.forEach((innRec: any, i: number) => {
+
     const n = i + 1;
 const allyPitchers = gameInfo.homeBatting
   ? innings[i].homePitchers
@@ -729,8 +735,7 @@ const bottomIsOpponent = (weAreHome);
 out += renderPitchers(pitchersBottom, bottomIsOpponent);
 out += `\n`;
 out += `\n`;
-    }
-  });
+    }  });
   setReportText(out);
 }, [gameInfo, innings, lineup, subs, records]);
 
@@ -742,39 +747,59 @@ function handleUndo() {
 
   // 現在のイニングが空でも、前のイニングの裏から戻せるように調整
   if (!bucket.length) {
+    let last: PlayRecord | null = null;
+    let poppedHalf: "表" | "裏" | null = null;
     if (currentHalf === "裏" && idx >= 0) {
       const prevTop = copy[idx].top;
       if (prevTop.length) {
-        const last = prevTop.pop() as PlayRecord;
+        last = prevTop.pop() as PlayRecord;
+        poppedHalf = "表";
         setRecords(copy);
         setCurrentHalf("表");
         setCurrentInning(idx + 1);
-        if (last.deltaOuts > 0) setCurrentOuts(3 - last.deltaOuts);
-        return;
       }
     } else if (currentHalf === "表" && idx > 0) {
       const prevBottom = copy[idx - 1].bottom;
       if (prevBottom.length) {
-        const last = prevBottom.pop() as PlayRecord;
+        last = prevBottom.pop() as PlayRecord;
+        poppedHalf = "裏";
         setRecords(copy);
         setCurrentHalf("裏");
         setCurrentInning(idx);
-        if (last.deltaOuts > 0) setCurrentOuts(3 - last.deltaOuts);
-        return;
+     }
+    }
+
+    if (last) {
+      if (last.deltaOuts > 0) setCurrentOuts(3 - last.deltaOuts);
+      if (last.advancedOrder && poppedHalf) {
+        // poppedHalf（実際に取り消した半イニング）で味方が打っていたかを判定
+        const allyWasBatting =
+          (gameInfo.homeBatting && poppedHalf === "裏") ||
+          (!gameInfo.homeBatting && poppedHalf === "表");
+        if (allyWasBatting) {
+          setAllyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
+        } else {
+          setEnemyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
+        }
       }
     }
-    return; 
+    return;
   }
+
 
   const last = bucket.pop() as PlayRecord;
   setRecords(copy);
 
-  // 打順を戻す
+  // 打順を戻す（homeBattingに応じて先攻／後攻を考慮）
   if (last.advancedOrder) {
-    if (currentHalf === "表") {
-      setEnemyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
+    const battingNowIsAlly =
+      (gameInfo.homeBatting && currentHalf === "裏") ||
+      (!gameInfo.homeBatting && currentHalf === "表");
+
+    if (battingNowIsAlly) {
+      setAllyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
     } else {
-      setAllyOrder((prev:number) => (prev === 1 ? 9 : prev - 1));
+      setEnemyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
     }
   }
 
@@ -1076,7 +1101,12 @@ const rec: PlayRecord =
   {subs.map((s:any, idx:number) => (
     <div key={idx} className="flex justify-between items-center mb-1 text-sm">
       <span>
-        {s.inning}回{s.half} {s.type}:{s.out}{s.type === '守備変更' ? `(${s.oldPos})→(${s.newPos})` : s.pos ? `(${s.pos})→${s.in}(${s.pos})` : ''}
+         {s.inning}回{s.half} {s.type}:{s.out}
+ {s.type === '守備変更'
+   ? `(${s.oldPos})→(${s.newPos})`
+   : s.type === '代打'
+     ? `→${s.in}`
+     : `(${s.pos})→${s.in}(${s.pos})`}
       </span>
 <button
   onClick={() => {
@@ -1113,6 +1143,7 @@ setBattingOrderState(rebuildBattingOrderState(lineup, updated));
           {/* 打席入力フォーム */}
           <AtBatForm
             lineup={lineup}
+            battingOrderState={battingOrderState}
             allyOrder={allyOrder}
             setAllyOrder={setAllyOrder}
             enemyOrder={enemyOrder}
