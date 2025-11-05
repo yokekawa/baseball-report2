@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 // ===== 共通データ =====
 const DEFAULT_PLAYERS = [
   "青田","泉","磯村","小野","金子","川除","菊地","紺木","佐藤",
-  "髙田","高橋","武田（一）","武田（心）","田中（樹）","田中（翔）","徳留","野路",
+  "髙田","高橋","武田一","武田心","田中樹","田中翔","徳留","野路",
   "橋本","廣澤","舟久保","本多","益田","増田","増野","渡部"
 ];
 const POS_LIST = ["投","捕","一","二","三","遊","左","中","右"];
@@ -206,7 +206,7 @@ const canIn = benchPlayers;
 <select value={oldPos} onChange={(e) => setOldPos(e.target.value)}
   className="p-1 border rounded">
   <option value="">変更前守備</option>
-  {[...posList, "(代打)"].map((p: string) => <option key={p}>{p}</option>)}
+  {[...posList, "代打"].map((p: string) => <option key={p}>{p}</option>)}
 </select>
 
             <select value={newPos} onChange={(e) => setNewPos(e.target.value)} className="p-1 border rounded">
@@ -480,16 +480,25 @@ setOutcome("");
         disabled={!!extraPlay}
       />
 
-      <label className="block text-sm mb-1">走塁プレー</label>
-      <select
-        value={extraPlay}
-        onChange={(e) => setExtraPlay(e.target.value)}
-        className="w-full p-2 border rounded mb-3"
-      >
-        {extraOptions.map((opt) => (
-          <option key={opt} value={opt}>{opt || "（なし）"}</option>
-        ))}
-      </select>
+<label className="block text-sm mb-1">走塁プレー</label>
+<div className="flex flex-col gap-2 mb-3">
+  <select
+    value={extraPlay.split(' ')[0] || ''}
+    onChange={(e) => setExtraPlay((prev) => `${e.target.value} ${prev.split(' ').slice(1).join(' ')}`.trim())}
+    className="w-full p-2 border rounded"
+  >
+    {extraOptions.map((opt) => (
+      <option key={opt} value={opt}>{opt || '（なし）'}</option>
+    ))}
+  </select>
+  <input
+    type="text"
+    value={extraPlay.split(' ').slice(1).join(' ')}
+    onChange={(e) => setExtraPlay((prev) => `${prev.split(' ')[0]} ${e.target.value}`.trim())}
+    placeholder="自由追記（例：盗塁成功 キャッチャー悪送球など）"
+    className="w-full p-2 border rounded"
+  />
+</div>
 
       <div className="mb-2 text-sm">
         アウト数（打席後）:
@@ -735,7 +744,8 @@ const bottomIsOpponent = (weAreHome);
 out += renderPitchers(pitchersBottom, bottomIsOpponent);
 out += `\n`;
 out += `\n`;
-    }  });
+    }
+  });
   setReportText(out);
 }, [gameInfo, innings, lineup, subs, records]);
 
@@ -766,7 +776,7 @@ function handleUndo() {
         setRecords(copy);
         setCurrentHalf("裏");
         setCurrentInning(idx);
-     }
+      }
     }
 
     if (last) {
