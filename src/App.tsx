@@ -677,7 +677,6 @@ lineup.forEach((p: any) => {
       // → 交代： 例）→3回裏 武田一(三)
       line += `→${s.inning}回${s.half} ${s.in}(${s.pos})`;
       NameNow = s.in;
-      PosNow = s.pos;
     } else if (s.type === "代打" && s.out === NameNow) {
       // → 代打： 例）→3回表 野路(代打)
       line += `→${s.inning}回${s.half} ${s.in}(代打)`;
@@ -685,7 +684,6 @@ lineup.forEach((p: any) => {
     } else if (s.type === "守備変更" && s.out === NameNow) {
       // → 守備変更：例）(三)→(一)
       line += `→${s.inning}回${s.half}(${s.newPos})`;
-      PosNow = s.newPos;
     }
   });
 
