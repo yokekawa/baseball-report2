@@ -1,4 +1,16 @@
 import React, { useState, useEffect } from "react";
+ // 投手配列を安全に更新する共通関数
+ function updateInningPitchers(prevInnings: any[], idx: number, side: "awayPitchers" | "homePitchers", p: any) {
+   return prevInnings.map((row, i) => {
+     if (i !== idx) return row;
+     const base = row[side];
+     const cand = (typeof p === "function") ? p(base) : p;
+     return {
+       ...row,
+       [side]: Array.isArray(cand) ? cand : [],
+     };
+   });
+ }
 
 // ===== 共通データ =====
 const DEFAULT_PLAYERS = [
@@ -43,6 +55,15 @@ const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}
 
 // ===== コンポーネント =====
 function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, isOpponent }: any) {
+pitchers = Array.isArray(pitchers) ? pitchers : [];
+function updatePitcher(index: number, key: string, value: string) {
+   setPitchers((prev: any) => {
+     const safe = Array.isArray(prev) ? prev : [];
+     const next = [...safe];
+     next[index] = { ...next[index], [key]: value };
+     return next;
+   });
+ }
 return (
     <div className="ml-3 text-sm">
       <div className="font-medium">{label}</div>
@@ -53,11 +74,7 @@ return (
           {!isOpponent && (
             <select
               value={p.name}
-              onChange={(e) => {
-                const copy = [...pitchers];
-                copy[j].name = e.target.value;
-                setPitchers(copy);
-              }}
+              onChange={(e) => updatePitcher(j, "name", e.target.value)}
               className="border rounded px-1"
             >
               <option value="">投手</option>
@@ -69,11 +86,9 @@ return (
             type="number"
             value={p.pitchThis}
             placeholder="球"
-            onChange={(e) => {
-              const copy = [...pitchers];
-              copy[j].pitchThis = e.target.value;
-              setPitchers(copy);
-            }}
+            
+            onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
+            
             className="w-12 border rounded px-1"
           />
 
@@ -84,17 +99,20 @@ return (
             value={p.pitchTotal}
             placeholder="累計"
             onChange={(e) => {
-              const copy = [...pitchers];
-              copy[j].pitchTotal = e.target.value;
-              setPitchers(copy);
+              updatePitcher(j, "pitchTotal", e.target.value)
             }}
             className="w-14 border rounded px-1"
           />
         </div>
       ))}
 
-      <button
-        onClick={() => setPitchers([...pitchers, { name: "", pitchThis: "", pitchTotal: "" }])}
+<button
+        onClick={() =>
+   setPitchers((prev: any[]) => {
+     const safe = Array.isArray(prev) ? prev : [];
+     return [...safe, { name: "", pitchThis: "", pitchTotal: "" }];
+   })
+ }
         className={`px-1 py-0.5 text-xs rounded ${buttonClass}`}
       >
         ＋投手
@@ -104,7 +122,7 @@ return (
 }
 
 // SubForm
-function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, battingOrderState, setBattingOrderState }: any) {
+function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInning, currentHalf, currentBatters }: any) {
   const [type, setType] = useState("交代");
   const [out, setOut] = useState("");
   const [inn, setInn] = useState("");
@@ -115,7 +133,7 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   const [half, setHalf] = useState(currentHalf || "表");
 
 const FielderNow = (() => {
-  const active = battingOrderState.filter((l: any) => l && l.name).map((l: any) => l.name);
+  const active = currentBatters().map((l: any) => l.name).filter(Boolean);
   const base = lineup.filter((l: any) => l && l.name).map((l: any) => l.name);
   let current = [...base, ...active];
 
@@ -140,22 +158,16 @@ const canIn = benchPlayers;
       if (!out || !inn || !pos) return;
       const sub = { type, out, in: inn, pos, inning, half };
       setSubs((prev: any) => [...prev, sub]);
-      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, name: inn, pos } : l);
-      setBattingOrderState(updated);
       onAdd(sub);
     } else if (type === "代打") {
       if (!out || !inn) return;
       const sub = { type, out, in: inn, inning, half };
       setSubs((prev: any) => [...prev, sub]);
-      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, name: inn } : l);
-      setBattingOrderState(updated);
       onAdd(sub);
     } else if (type === "守備変更") {
       if (!out || !oldPos || !newPos) return;
       const sub = { type, out, oldPos, newPos, inning, half };
       setSubs((prev: any) => [...prev, sub]);
-      const updated = battingOrderState.map((l: any) => l.name === out ? { ...l, pos: newPos } : l);
-      setBattingOrderState(updated);
       onAdd(sub);
     }
 
@@ -231,7 +243,7 @@ const canIn = benchPlayers;
 // 打席入力フォーム
 function AtBatForm({
   lineup,
-  battingOrderState,
+  currentBatters,
   allyOrder,
   setAllyOrder,
   enemyOrder,
@@ -262,7 +274,7 @@ function AtBatForm({
   function handleAppend() {
     
     const useOrder = battingNowIsAlly ? allyOrder : enemyOrder;
-    const name = battingNowIsAlly ? (battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
+    const name = battingNowIsAlly ? (currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
 
     const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
@@ -352,7 +364,7 @@ setOutcome("");
       <div className="mb-2 font-bold">
         現在：{currentInning}回{currentHalf} | {battingNowIsAlly ? (
     <>
-      味方 {allyOrder}番 {battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}
+      八王子 {allyOrder}番 {currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}
     </>
   ) : (
     <>
@@ -386,7 +398,7 @@ setOutcome("");
           </select>
         )}
         {battingNowIsAlly && (
-          <span className="text-gray-500">（{battingOrderState[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}）</span>
+          <span className="text-gray-500">（{currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者"}）</span>
         )}
 
         
@@ -411,21 +423,17 @@ setOutcome("");
   <optgroup label="外野方向">
     <option value="レフト">レフト</option>
     <option value="レフト前">レフト前</option>
+    <option value="レフト線">レフト線</option>
     <option value="レフトオーバー">レフトオーバー</option>
     <option value="センター">センター</option>
     <option value="センター前">センター前</option>
     <option value="センターオーバー">センターオーバー</option>
     <option value="ライト">ライト</option>
     <option value="ライト前">ライト前</option>
+    <option value="ライト線">ライト線</option>
     <option value="ライトオーバー">ライトオーバー</option>
     <option value="左中間">左中間</option>
     <option value="右中間">右中間</option>
-  </optgroup>
-  <optgroup label="ライン・ファールゾーン">
-    <option value="レフト線">レフト線</option>
-    <option value="ライト線">ライト線</option>
-    <option value="ファーストファール">ファーストファール</option>
-    <option value="サードファール">サードファール</option>
   </optgroup>
 </select>
 
@@ -447,6 +455,7 @@ setOutcome("");
   </optgroup>
   <optgroup label="凡打">
     <option value="フライ">フライ</option>
+    <option value="ファールフライ">ファールフライ</option>
     <option value="ゴロ">ゴロ</option>
     <option value="ライナー">ライナー</option>
   </optgroup>
@@ -495,7 +504,7 @@ setOutcome("");
     type="text"
     value={extraPlay.split(' ').slice(1).join(' ')}
     onChange={(e) => setExtraPlay((prev) => `${prev.split(' ')[0]} ${e.target.value}`.trim())}
-    placeholder="自由追記（例：盗塁成功 キャッチャー悪送球など）"
+    placeholder="自由追記（例：キャッチャー悪送球など）"
     className="w-full p-2 border rounded"
   />
 </div>
@@ -581,15 +590,6 @@ const [lineup, setLineup] = useState(() => {
   }
   return Array.from({ length: 9 }, (_, i) => ({ order: i + 1, name: '', pos: '' }));
 });
-
-const [battingOrderState, setBattingOrderState] = useState([...lineup]); // 打席用状態
-
-// 先発入力後、battingOrderState がまだ空（誰も名前がない）なら同期する
-useEffect(() => {
-  if (!battingOrderState.some((p: any) => p && p.name) && lineup.some((p: any) => p && p.name)) {
-    setBattingOrderState(lineup.map((p: any) => ({ ...p })));
-  }
-}, [lineup]); // ★依存は lineup のみ
   
   const [subs, setSubs] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
@@ -597,10 +597,9 @@ useEffect(() => {
   });
   
 // subs の変更時に出場状態を再構築
-useEffect(() => {
-  setBattingOrderState(rebuildBattingOrderState(lineup, subs));
-}, [subs, lineup]);
-  
+ function currentBatters() {
+   return rebuildBattingOrderState(lineup, subs);
+ }
   const [records, setRecords] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     return saved ? JSON.parse(saved).records || Array.from({ length: 7 }, () => ({ top: [], bottom: [] })) : Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
@@ -640,7 +639,6 @@ const [allyOrder, setAllyOrder] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     return saved ? JSON.parse(saved).currentOuts || 0 : 0;
   });
-;
 
 // レポート生成（自動；手書き編集は textarea に直接）
 useEffect(() => {
@@ -657,11 +655,11 @@ useEffect(() => {
 
   out += ` 　  　　　/1234567/計\n`;
   if (gameInfo.homeBatting) {
-    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join(" ")} /${totalAway}\n`;
-    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join(" ")} /${totalHome}\n\n`;
+    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join("")}/${totalAway}\n`;
+    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join("")}/${totalHome}\n\n`;
   } else {
-    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join(" ")} /${totalHome}\n`;
-    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join(" ")} /${totalAway}\n\n`;
+    out += ` 【${gameInfo.home}】/${innings.map((i: any) => i.home || "").join("")}/${totalHome}\n`;
+    out += ` 【${gameInfo.away}】/${innings.map((i: any) => i.away || "").join("")}/${totalAway}\n\n`;
   }
 
 out += `【先発メンバー】\n`;
@@ -969,13 +967,9 @@ useEffect(() => {
             />
           </div>
           <PitcherInputs
-            label="味方投手"
+            label="八王子投手"
             pitchers={inn.awayPitchers}
-            setPitchers={(p: any) => {
-              const copy = [...innings];
-              copy[idx].awayPitchers = p;
-              setInnings(copy);
-            }}
+	    setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "awayPitchers", p))}
             playerList={playerList}
             buttonClass="bg-blue-100"
             isOpponent={false}
@@ -984,7 +978,7 @@ useEffect(() => {
 
         {/* 後攻（ホーム／味方）の攻撃 */}
         <div className="mb-2">
-          <span className="font-semibold">味方の攻撃</span>
+          <span className="font-semibold">八王子の攻撃</span>
           <div className="flex gap-2 items-center mt-1">
             <span>得点</span>
             <input
@@ -1001,11 +995,7 @@ useEffect(() => {
           <PitcherInputs
             label="相手投手"
             pitchers={inn.homePitchers}
-            setPitchers={(p: any) => {
-              const copy = [...innings];
-              copy[idx].homePitchers = p;
-              setInnings(copy);
-            }}
+            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "homePitchers", p))}
             playerList={playerList}
             buttonClass="bg-green-100"
             isOpponent={true}
@@ -1016,7 +1006,7 @@ useEffect(() => {
       <>
         {/* 先攻（ホーム／味方）の攻撃 */}
         <div className="mb-2">
-          <span className="font-semibold">味方の攻撃</span>
+          <span className="font-semibold">八王子の攻撃</span>
           <div className="flex gap-2 items-center mt-1">
             <span>得点</span>
             <input
@@ -1033,11 +1023,7 @@ useEffect(() => {
           <PitcherInputs
             label="相手投手"
             pitchers={inn.homePitchers}
-            setPitchers={(p: any) => {
-              const copy = [...innings];
-              copy[idx].homePitchers = p;
-              setInnings(copy);
-            }}
+            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "homePitchers", p))}
             playerList={playerList}
             buttonClass="bg-green-100"
             isOpponent={true}
@@ -1061,13 +1047,9 @@ useEffect(() => {
             />
           </div>
           <PitcherInputs
-            label="味方投手"
+            label="八王子投手"
             pitchers={inn.awayPitchers}
-            setPitchers={(p: any) => {
-              const copy = [...innings];
-              copy[idx].awayPitchers = p;
-              setInnings(copy);
-            }}
+            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "awayPitchers", p))}
             playerList={playerList}
             buttonClass="bg-blue-100"
             isOpponent={false}
@@ -1087,8 +1069,7 @@ useEffect(() => {
   setSubs={setSubs}
   currentInning={currentInning}
   currentHalf={currentHalf}
-  battingOrderState={battingOrderState}
-  setBattingOrderState={setBattingOrderState}
+  currentBatters={currentBatters}
   onAdd={(s:any) => {
     const idx = s.inning - 1;
 const rec: PlayRecord =
@@ -1122,8 +1103,6 @@ const rec: PlayRecord =
   onClick={() => {
     const updated = subs.filter((_: any, i: number) => i !== idx);
 setSubs(updated);
-setBattingOrderState(rebuildBattingOrderState(lineup, updated));
-
     // 打席結果からも該当の交代行を削除
     const copy = [...records];
     copy.forEach((inn: any) => {
@@ -1153,7 +1132,7 @@ setBattingOrderState(rebuildBattingOrderState(lineup, updated));
           {/* 打席入力フォーム */}
           <AtBatForm
             lineup={lineup}
-            battingOrderState={battingOrderState}
+            currentBatters={currentBatters}
             allyOrder={allyOrder}
             setAllyOrder={setAllyOrder}
             enemyOrder={enemyOrder}
@@ -1230,7 +1209,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   }}
   className="mt-3 ml-2 px-4 py-2 bg-red-600 text-white rounded"
 >
-  🗑 打席記録削除
+  🗑 全削除して次の試合へ
 </button>
         </div>
       </div>
