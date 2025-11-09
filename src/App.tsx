@@ -734,9 +734,9 @@ out += `\n`;
   });
    return out;
  }
-// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   setReportText(generateReport(gameInfo, innings, lineup, subs, records));
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [gameInfo, innings, lineup, subs, records]);
 
  // ====== 最後の入力を取り消す（差分で戻す） ======
@@ -817,7 +817,6 @@ useEffect(() => {
   }));
 }, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
-/* eslint-enable react-hooks/exhaustive-deps */
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
   if (saved) {
