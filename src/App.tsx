@@ -969,7 +969,7 @@ useEffect(() => {
           <PitcherInputs
             label="八王子投手"
             pitchers={inn.awayPitchers}
-	    setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "awayPitchers", p))}
+	    setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "awayPitchers", p))}
             playerList={playerList}
             buttonClass="bg-blue-100"
             isOpponent={false}
@@ -995,7 +995,7 @@ useEffect(() => {
           <PitcherInputs
             label="相手投手"
             pitchers={inn.homePitchers}
-            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "homePitchers", p))}
+            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "homePitchers", p))}
             playerList={playerList}
             buttonClass="bg-green-100"
             isOpponent={true}
@@ -1023,7 +1023,7 @@ useEffect(() => {
           <PitcherInputs
             label="相手投手"
             pitchers={inn.homePitchers}
-            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "homePitchers", p))}
+            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "homePitchers", p))}
             playerList={playerList}
             buttonClass="bg-green-100"
             isOpponent={true}
@@ -1049,7 +1049,7 @@ useEffect(() => {
           <PitcherInputs
             label="八王子投手"
             pitchers={inn.awayPitchers}
-            setPitchers={(p: any) => setInnings(prev => updateInningPitchers(prev, idx, "awayPitchers", p))}
+            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "awayPitchers", p))}
             playerList={playerList}
             buttonClass="bg-blue-100"
             isOpponent={false}
