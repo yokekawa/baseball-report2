@@ -734,14 +734,14 @@ out += `\n`;
   });
    return out;
  }
+/* eslint-disable react-hooks/exhaustive-deps */
 useEffect(() => {
   setReportText(generateReport(gameInfo, innings, lineup, subs, records));
 }, 
-// eslint-disable-next-line react-hooks/exhaustive-deps
 [
   gameInfo, innings, lineup, subs, records
 ]);
-
+/* eslint-disable react-hooks/exhaustive-deps */
  // ====== 最後の入力を取り消す（差分で戻す） ======
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
