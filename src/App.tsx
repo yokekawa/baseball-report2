@@ -734,9 +734,11 @@ out += `\n`;
   });
    return out;
  }
+// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
- setReportText(generateReport(gameInfo, innings, lineup, subs, records));
+  setReportText(generateReport(gameInfo, innings, lineup, subs, records));
 }, [gameInfo, innings, lineup, subs, records]);
+
  // ====== 最後の入力を取り消す（差分で戻す） ======
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
