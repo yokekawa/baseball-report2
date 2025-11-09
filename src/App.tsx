@@ -266,7 +266,6 @@ function AtBatForm({
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
-// eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setSelectedOuts(currentOuts); }, [currentInning, currentHalf, currentOuts]);
 
   function handleAppend() {
@@ -639,7 +638,6 @@ const [allyOrder, setAllyOrder] = useState(() => {
   });
 
 // レポート生成（自動；手書き編集は textarea に直接）
-// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
   const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
@@ -735,8 +733,8 @@ out += `\n`;
     }
   });
   setReportText(out);
- }, [gameInfo, innings, lineup, subs, records]); // ← useEffect はここで閉じる
-
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [gameInfo, innings, lineup, subs, records]);
  // ====== 最後の入力を取り消す（差分で戻す） ======
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
@@ -807,7 +805,6 @@ out += `\n`;
 }
   
 // 入力データを自動保存
-// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   localStorage.setItem('baseballReportData', JSON.stringify({
     gameInfo, innings, lineup, subs, records,
@@ -816,7 +813,6 @@ useEffect(() => {
   }));
 }, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
-// eslint-disable-next-line react-hooks/exhaustive-deps
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
   if (saved) {
