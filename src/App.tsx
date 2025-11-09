@@ -638,8 +638,7 @@ const [allyOrder, setAllyOrder] = useState(() => {
   });
 
 // レポート生成
-/* eslint-disable react-hooks/exhaustive-deps */
-useEffect(() => {
+function generateReport(gameInfo: any, innings: any, lineup: any, subs: any, records: any) {
   const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
   const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
 
@@ -733,10 +732,12 @@ out += `\n`;
 out += `\n`;
     }
   });
-  setReportText(out);
+   return out;
+ }
+useEffect(() => {
+ setReportText(generateReport(gameInfo, innings, lineup, subs, records));
 }, [gameInfo, innings, lineup, subs, records]);
  // ====== 最後の入力を取り消す（差分で戻す） ======
- /* eslint-enable react-hooks/exhaustive-deps */
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
   const bucket = currentHalf === "表" ? copy[idx].top : copy[idx].bottom;
