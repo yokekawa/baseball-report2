@@ -637,7 +637,8 @@ const [allyOrder, setAllyOrder] = useState(() => {
     return saved ? JSON.parse(saved).currentOuts || 0 : 0;
   });
 
-// レポート生成（自動；手書き編集は textarea に直接）
+// レポート生成
+/* eslint-disable react-hooks/exhaustive-deps */
 useEffect(() => {
   const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
   const totalHome = innings.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
@@ -733,9 +734,9 @@ out += `\n`;
     }
   });
   setReportText(out);
-// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [gameInfo, innings, lineup, subs, records]);
  // ====== 最後の入力を取り消す（差分で戻す） ======
+ /* eslint-enable react-hooks/exhaustive-deps */
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
   const bucket = currentHalf === "表" ? copy[idx].top : copy[idx].bottom;
@@ -813,6 +814,7 @@ useEffect(() => {
   }));
 }, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
+/* eslint-enable react-hooks/exhaustive-deps */
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
   if (saved) {
