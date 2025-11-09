@@ -150,7 +150,6 @@ const FielderNow = (() => {
 const benchPlayers = playerList.filter((p: string) => !FielderNow.includes(p));
 
 // 「退く選手」、「入る選手」を表示
-const canOut = FielderNow;
 const canIn = benchPlayers;
 
   function handleAdd() {
@@ -671,7 +670,6 @@ lineup.forEach((p: any) => {
 
   // 現在の出場選手を追跡（交代チェーンに対応）
   let NameNow = p.name;
-  let PosNow = p.pos;
 
   // subs は時系列順なのでそのまま走査でOK
   subs.forEach((s: any) => {
