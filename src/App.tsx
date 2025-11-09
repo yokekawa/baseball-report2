@@ -259,7 +259,6 @@ function AtBatForm({
   onUndo,
 }: any) {
   const [freeText, setFreeText] = useState("");
-  const [note, setNote] = useState("");
   const [bases, setBases] = useState("なし");
   const [selectedOuts, setSelectedOuts] = useState(currentOuts);
   const [extraPlay, setExtraPlay] = useState("");
@@ -703,12 +702,6 @@ out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
   records.forEach((innRec: any, i: number) => {
 
     const n = i + 1;
-const allyPitchers = gameInfo.homeBatting
-  ? innings[i].homePitchers
-  : innings[i].awayPitchers;
-const oppPitchers = gameInfo.homeBatting
-  ? innings[i].awayPitchers
-  : innings[i].homePitchers; 
     const weAreHome = gameInfo.homeBatting;
     const homeTeamPitchers = innings[i].homePitchers;
     const awayTeamPitchers = innings[i].awayPitchers;
@@ -745,8 +738,7 @@ out += `\n`;
     }
   });
   setReportText(out);
-}, [gameInfo, innings, lineup, subs, records]);
-
+}, [gameInfo, innings, lineup, subs, records]); // eslint-disable-line react-hooks/exhaustive-deps
   // 最後の入力を取り消す（差分で戻す）
 function handleUndo() {
   const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
