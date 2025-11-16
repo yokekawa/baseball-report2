@@ -1108,10 +1108,11 @@ useEffect(() => {
     const idx = s.inning - 1;
 const rec: PlayRecord =
   s.type === "守備変更"
-    ? { line: `${s.type}：${s.out}(${s.oldPos})→(${s.newPos})`, deltaOuts: 0, advancedOrder: false }
+    ? { line: `${s.type}：${s.out}(${s.oldPos})→(${s.newPos})`,
+        deltaOuts: 0, advancedOrder: false, batterName: "" }
     : s.type === "代打"
      ? { line: `${s.out}→${s.in}(代打)`, deltaOuts: 0, advancedOrder: false, batterName: "" }
-    : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
+    : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false, batterName: "" };
 
     const copy = [...records];
     if (s.half === '表') copy[idx].top.push(rec); else copy[idx].bottom.push(rec);
@@ -1201,7 +1202,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
             onChange={(e) => setReportText(e.target.value)}
             className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] overflow-auto border w-full"
           />
-
           <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
