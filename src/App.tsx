@@ -639,7 +639,7 @@ const [allyOrder, setAllyOrder] = useState(() => {
     return saved ? JSON.parse(saved).currentOuts || 0 : 0;
   });
 
-function formatPlays(list) {
+function formatPlays(list: PlayRecord[]) {
   let out = "";
   let num = 1;
   let a = 0;
