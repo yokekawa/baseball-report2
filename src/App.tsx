@@ -25,6 +25,7 @@ type PlayRecord = {
   line: string;
   deltaOuts: number;
   advancedOrder: boolean;
+  batterName: string;
 };
 
 type InningRow = {
@@ -266,6 +267,7 @@ function AtBatForm({
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
+  const [lastBases, setLastBases] = useState("なし");
   useEffect(() => { setSelectedOuts(currentOuts); }, [currentInning, currentHalf, currentOuts]);
 
   function handleAppend() {
@@ -282,8 +284,7 @@ function AtBatForm({
       const indent = battingNowIsAlly ? "　　　　" : "　　";
       line = `${indent}${text}　${outsToUse}死`;
     } else {
-      const prefix = battingNowIsAlly ? `${useOrder}.${name}` : `${useOrder}.`;
-      line = `${prefix}${prefix ? "　" : ""}${text}　${outsToUse}死`;
+      line = `${text}　${outsToUse}死`;
     }
 
     if (outsToUse === 3) {
@@ -297,7 +298,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder });
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: name });
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -308,7 +309,7 @@ if (battingNowIsAlly) {
         setEnemyOrder(next);
       }
     }
-
+setLastBases(bases);
     // アウト確定処理
     if (outsToUse === 3) {
       if (currentHalf === "表") {
@@ -319,13 +320,14 @@ if (battingNowIsAlly) {
       }
       setCurrentOuts(0);
       setSelectedOuts(0);
+      setLastBases("なし");
     } else {
       setCurrentOuts(outsToUse);
     }
 
     // クリア
 setFreeText("");
-setBases("なし");
+setBases(lastBases); 
 setExtraPlay("");
 setDirection("");
 setOutcome("");
@@ -336,7 +338,7 @@ setOutcome("");
   function addNote() {
     if (!ft.trim()) return;
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
-    const rec = { line: `${ft.trim()}`, deltaOuts: 0, advancedOrder: false };
+    const rec = { line: `${ft.trim()}`, deltaOuts: 0, advancedOrder: false, batterName: "" };
     onAppend(idx, currentHalf, rec);
     setFt("");
   }
@@ -637,6 +639,39 @@ const [allyOrder, setAllyOrder] = useState(() => {
     return saved ? JSON.parse(saved).currentOuts || 0 : 0;
   });
 
+function formatPlays(list) {
+  let out = "";
+  let num = 1;
+  let a = 0;
+
+  list.forEach(r => {
+
+    if (r.advancedOrder) {　// バッティング
+      const play = r.line.replace(/^　+/, "").trim();
+      if (a === 0) {
+      out += `${num}. ${r.batterName}　${play}\n`;
+      } else {
+        out += `　　　　${play}\n`;
+      }
+      num++;
+      a = 0; 
+    } else {　// 走塁
+
+      const play = r.line.replace(/^　+/, "").trim();
+
+      if (a === 0) {
+        out += `${num}. ${r.batterName}　${play}\n`;
+      } else {
+        out += `　　　　${play}\n`;
+      }
+
+      a = 1;  
+     }
+   });
+
+   return out;
+ }
+
 // レポート生成
 function generateReport(gameInfo: any, innings: any, lineup: any, subs: any, records: any) {
   const totalAway = innings.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
@@ -693,7 +728,11 @@ out += `\n`;
 
 const starter = lineup.find((p: any) => p.pos === "投");
 out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
-  
+
+
+
+
+
   records.forEach((innRec: any, i: number) => {
 
     const n = i + 1;
@@ -702,7 +741,7 @@ out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
     const awayTeamPitchers = innings[i].awayPitchers;
     if (innRec.top.length) {     
 out += `●${n}回表\n`;
-innRec.top.forEach((r: any) => (out += r.line + "\n"));
+out += formatPlays(innRec.top);
 
 const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
 if (runsTop !== "") {
@@ -718,7 +757,7 @@ out += `\n`;
     }
     if (innRec.bottom.length) {
 out += `●${n}回裏\n`;
-innRec.bottom.forEach((r: any) => (out += r.line + "\n"));
+out += formatPlays(innRec.bottom);
 
 const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
 if (runsBottom !== "") {
@@ -742,6 +781,7 @@ useEffect(() => {
   gameInfo, innings, lineup, subs, records
 ]);
 /* eslint-disable react-hooks/exhaustive-deps */
+
  // ====== 最後の入力を取り消す（差分で戻す） ======
  function handleUndo() {  const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
   const copy = [...records];
@@ -1070,7 +1110,7 @@ const rec: PlayRecord =
   s.type === "守備変更"
     ? { line: `${s.type}：${s.out}(${s.oldPos})→(${s.newPos})`, deltaOuts: 0, advancedOrder: false }
     : s.type === "代打"
-    ? { line: `${s.out}→${s.in}(代打)`, deltaOuts: 0, advancedOrder: false }
+     ? { line: `${s.out}→${s.in}(代打)`, deltaOuts: 0, advancedOrder: false, batterName: "" }
     : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false };
 
     const copy = [...records];
@@ -1161,6 +1201,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
             onChange={(e) => setReportText(e.target.value)}
             className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] overflow-auto border w-full"
           />
+
           <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
@@ -1203,7 +1244,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   }}
   className="mt-3 ml-2 px-4 py-2 bg-red-600 text-white rounded"
 >
-  🗑 全削除して次の試合へ
+  🗑 次の試合へ(打席結果全削除）
 </button>
         </div>
       </div>
