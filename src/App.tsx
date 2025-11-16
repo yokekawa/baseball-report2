@@ -1234,7 +1234,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
         setCurrentHalf('表');
         setCurrentOuts(0);
         setAllyOrder(1);
-        setEnemyOrder(1);
+        seteOrder(1);
 
         const saved = JSON.parse(localStorage.getItem('baseballReportData') || '{}');
         localStorage.setItem('baseballReportData', JSON.stringify({
