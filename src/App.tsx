@@ -246,8 +246,8 @@ function AtBatForm({
   currentBatters,
   allyOrder,
   setAllyOrder,
-  enemyOrder,
-  setEnemyOrder,
+  eOrder,
+  seteOrder,
   homeBatting,
   onAppend,
   currentInning,
@@ -268,11 +268,20 @@ function AtBatForm({
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
   const [lastBases, setLastBases] = useState("なし");
+  const [fA, setfA] = useState(false);
+  const [fU, setfU] = useState(false);
   useEffect(() => { setSelectedOuts(currentOuts); }, [currentInning, currentHalf, currentOuts]);
+
+ function flash(fn: () => void, setFlash: any) {
+   setFlash(true);      // 光る！
+   fn();                // 実行
+   setTimeout(() => setFlash(false), 150);  // 0.15秒後に戻る
+ }
+
 
   function handleAppend() {
     
-    const useOrder = battingNowIsAlly ? allyOrder : enemyOrder;
+    const useOrder = battingNowIsAlly ? allyOrder : eOrder;
     const name = battingNowIsAlly ? (currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
 
     const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
@@ -298,7 +307,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: name });
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: `${useOrder}. ${name}` });
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -306,7 +315,7 @@ function AtBatForm({
 if (battingNowIsAlly) {
         setAllyOrder(next);
       } else {
-        setEnemyOrder(next);
+        seteOrder(next);
       }
     }
 setLastBases(bases);
@@ -327,7 +336,7 @@ setLastBases(bases);
 
     // クリア
 setFreeText("");
-setBases(lastBases); 
+setBases(bases); 
 setExtraPlay("");
 setDirection("");
 setOutcome("");
@@ -367,7 +376,7 @@ setOutcome("");
     </>
   ) : (
     <>
-      相手 {enemyOrder}番打者
+      相手 {eOrder}番打者
     </>
   )}
       </div>
@@ -387,8 +396,8 @@ setOutcome("");
           </select>
         ) : (
           <select
-            value={enemyOrder}
-            onChange={(e) => setEnemyOrder(parseInt(e.target.value, 10))}
+            value={eOrder}
+            onChange={(e) => seteOrder(parseInt(e.target.value, 10))}
             className="p-1 border rounded"
           >
             {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
@@ -535,10 +544,12 @@ setOutcome("");
         ))}
       </div>
 
-      <button onClick={handleAppend} className="w-full px-3 py-2 bg-blue-600 text-white rounded">
+      <button onClick={() => flash(handleAppend, setfA)}
+       className={`w-full px-3 py-2 rounded text-white ${fA ? "bg-yellow-400" : "bg-blue-600"}`}>
         ＋ このプレイを {currentInning}回{currentHalf} に追加
       </button>
-      <button onClick={onUndo} className="w-full px-3 py-2 bg-red-600 text-white rounded mt-2">
+      <button onClick={() => flash(onUndo, setfU)}
+       className={`w-full px-3 py-2 rounded text-white mt-2 ${fU ? "bg-yellow-400" : "bg-red-600"}`}>
         1プレイ戻す
       </button>
       
@@ -619,9 +630,9 @@ const [allyOrder, setAllyOrder] = useState(() => {
   return 1;
 });
 
-  const [enemyOrder, setEnemyOrder] = useState(() => {
+  const [eOrder, seteOrder] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
-    return saved ? JSON.parse(saved).enemyOrder || 1 : 1;
+    return saved ? JSON.parse(saved).eOrder || 1 : 1;
   });
 
   const [currentInning, setCurrentInning] = useState(() => {
@@ -641,7 +652,6 @@ const [allyOrder, setAllyOrder] = useState(() => {
 
 function formatPlays(list: PlayRecord[]) {
   let out = "";
-  let num = 1;
   let a = 0;
 
   list.forEach(r => {
@@ -649,18 +659,17 @@ function formatPlays(list: PlayRecord[]) {
     if (r.advancedOrder) {　// バッティング
       const play = r.line.replace(/^　+/, "").trim();
       if (a === 0) {
-      out += `${num}. ${r.batterName}　${play}\n`;
+      out += `${r.batterName}　${play}\n`;
       } else {
         out += `　　　　${play}\n`;
       }
-      num++;
       a = 0; 
     } else {　// 走塁
 
       const play = r.line.replace(/^　+/, "").trim();
 
       if (a === 0) {
-        out += `${num}. ${r.batterName}　${play}\n`;
+        out += `${r.batterName}　${play}\n`;
       } else {
         out += `　　　　${play}\n`;
       }
@@ -821,7 +830,7 @@ useEffect(() => {
         if (allyWasBatting) {
           setAllyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
         } else {
-          setEnemyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
+          seteOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
         }
       }
     }
@@ -841,7 +850,7 @@ useEffect(() => {
     if (battingNowIsAlly) {
       setAllyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
     } else {
-      setEnemyOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
+      seteOrder((prev: number) => (prev === 1 ? 9 : prev - 1));
     }
   }
 
@@ -855,10 +864,10 @@ useEffect(() => {
 useEffect(() => {
   localStorage.setItem('baseballReportData', JSON.stringify({
     gameInfo, innings, lineup, subs, records,
-    allyOrder, enemyOrder, currentInning, currentHalf, currentOuts,
+    allyOrder, eOrder, currentInning, currentHalf, currentOuts,
     reportText
   }));
-}, [gameInfo, innings, lineup, subs, records, allyOrder, enemyOrder, currentInning, currentHalf, currentOuts, reportText]);
+}, [gameInfo, innings, lineup, subs, records, allyOrder, eOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
@@ -870,7 +879,7 @@ useEffect(() => {
     setSubs(data.subs || []);
     setRecords(data.records || records);
     setAllyOrder(data.allyOrder || 1);
-    setEnemyOrder(data.enemyOrder || 1);
+    seteOrder(data.eOrder || 1);
     setCurrentInning(data.currentInning || 1);
     setCurrentHalf(data.currentHalf || '表');
     setCurrentOuts(data.currentOuts || 0);
@@ -1170,8 +1179,8 @@ setSubs(updated);
             currentBatters={currentBatters}
             allyOrder={allyOrder}
             setAllyOrder={setAllyOrder}
-            enemyOrder={enemyOrder}
-            setEnemyOrder={setEnemyOrder}
+            eOrder={eOrder}
+            seteOrder={seteOrder}
             homeBatting={gameInfo.homeBatting}
             onAppend={(i: number, h: "表" | "裏", rec: PlayRecord) => {
               const copy = [...records];
@@ -1202,6 +1211,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
             onChange={(e) => setReportText(e.target.value)}
             className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] overflow-auto border w-full"
           />
+
           <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
