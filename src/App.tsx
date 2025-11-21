@@ -891,7 +891,7 @@ useEffect(() => {
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
-        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh] landscape:h-screen landscape:max-h-screen min-h-0">
+        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh] landscape:h-screen landscape:max-h-screen">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
 
           {/* 基本試合情報入力 */}
@@ -1205,7 +1205,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
         </div>
 
         {/* 右ペイン：レポート出力 */}
-        <div className="bg-white p-4 rounded-xl shadow min-h-0">
+        <div className="bg-white p-4 rounded-xl shadow">
           <h1 className="text-xl font-bold mb-3">レポート出力</h1>
           <textarea
             value={reportText}
