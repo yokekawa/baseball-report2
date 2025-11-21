@@ -307,7 +307,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: `${useOrder}. ${name}` });
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${useOrder}.${name}　`: `${useOrder}.`});
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -657,19 +657,19 @@ function formatPlays(list: PlayRecord[]) {
   list.forEach(r => {
 
     if (r.advancedOrder) {　// バッティング
-      const play = r.line.replace(/^　+/, "").trim();
+      const play = r.line;
       if (a === 0) {
-      out += `${r.batterName}　${play}\n`;
+      out += `${r.batterName}${play}\n`;
       } else {
         out += `　　　　${play}\n`;
       }
       a = 0; 
     } else {　// 走塁
 
-      const play = r.line.replace(/^　+/, "").trim();
+      const play = r.line.replace(/^　+/, "");
 
       if (a === 0) {
-        out += `${r.batterName}　${play}\n`;
+        out += `${r.batterName}${play}\n`;
       } else {
         out += `　　　　${play}\n`;
       }
@@ -889,7 +889,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
         <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh]">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
@@ -1211,7 +1211,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
             onChange={(e) => setReportText(e.target.value)}
             className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] overflow-auto border w-full"
           />
-
           <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
