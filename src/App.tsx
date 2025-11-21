@@ -891,7 +891,7 @@ useEffect(() => {
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
-        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh]">
+        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh] landscape:h-screen landscape:max-h-screen">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
 
           {/* 基本試合情報入力 */}
@@ -1209,9 +1209,11 @@ localStorage.setItem('baseballReportData', JSON.stringify({
           <textarea
             value={reportText}
             onChange={(e) => setReportText(e.target.value)}
-            className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] overflow-auto border w-full"
-          />
-          <button
+            className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
+            h-[600px] 
+            landscape:h-screen landscape:max-h-screen
+            overflow-auto border w-full"
+ />          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
               alert("コピーしました");
