@@ -1204,11 +1204,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   landscape:h-screen landscape:max-h-screen
   overflow-auto border w-full"
  />
-        </div>
-      </div>
-    </div>
-  );
-}
+
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
