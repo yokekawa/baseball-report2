@@ -288,13 +288,7 @@ function AtBatForm({
     const outsToUse = Number(selectedOuts) || 0;
 
     let line = "";
-    if (extraPlay) {
-      // 走塁プレー
-      const indent = battingNowIsAlly ? "　　　　" : "　　";
-      line = `${indent}${text}　${outsToUse}死`;
-    } else {
-      line = `${text}　${outsToUse}死`;
-    }
+    line = `${text}　${outsToUse}死`;
 
     if (outsToUse === 3) {
       line = line.replace(/3死$/, "");
@@ -307,7 +301,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${useOrder}.${name}　`: `${useOrder}.`});
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${useOrder}.${name}`: `${useOrder}.`});
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -559,8 +553,6 @@ setOutcome("");
 
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
-  
-
   const playerList = DEFAULT_PLAYERS;
   // subs の履歴から最新の出場状態を再構築する関数
   function rebuildBattingOrderState(lineup: any, subs: any) {
@@ -650,36 +642,36 @@ const [allyOrder, setAllyOrder] = useState(() => {
     return saved ? JSON.parse(saved).currentOuts || 0 : 0;
   });
 
-function formatPlays(list: PlayRecord[]) {
+function formatPlays(list: PlayRecord[], isAllyBatting: boolean) {
   let out = "";
-  let a = 0;
+  let a = 0; // 0＝新打席（打順＋選手名）、1＝同打席（インデントのみ）
 
-  list.forEach(r => {
+  list.forEach((r) => {
+    const isAtBat = r.advancedOrder;
+    const play = r.line;
+    let indent = "";
 
-    if (r.advancedOrder) {　// バッティング
-      const play = r.line;
-      if (a === 0) {
-      out += `${r.batterName}${play}\n`;
-      } else {
-        out += `　　　　${play}\n`;
-      }
+    if (isAllyBatting) {
+      // 味方攻撃：打者名＋打順でインデントを揃える（従来の挙動）
+      const firstIndent = r.batterName ? r.batterName + "　" : "";
+      const contIndent = firstIndent ? "　".repeat(firstIndent.length - 1) : "";
+      indent = a === 0 ? firstIndent : contIndent;
+    } else {
+      // 相手攻撃：1行目は打順のみ、継続行は常に半角3スペース
+      indent = a === 0 ? (r.batterName || "").trim() : "   ";
+    }
+
+    out += `${indent}${play}\n`;
+
+    if (!isAtBat && r.batterName === "") {
       a = 0; 
-    } else {　// 走塁
+    } else {
+      a = isAtBat ? 0 : 1;
+    }
+  });
+  return out;
+}
 
-      const play = r.line.replace(/^　+/, "");
-
-      if (a === 0) {
-        out += `${r.batterName}${play}\n`;
-      } else {
-        out += `　　　　${play}\n`;
-      }
-
-      a = 1;  
-     }
-   });
-
-   return out;
- }
 
 // レポート生成
 function generateReport(gameInfo: any, innings: any, lineup: any, subs: any, records: any) {
@@ -738,10 +730,6 @@ out += `\n`;
 const starter = lineup.find((p: any) => p.pos === "投");
 out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
 
-
-
-
-
   records.forEach((innRec: any, i: number) => {
 
     const n = i + 1;
@@ -750,7 +738,7 @@ out += `※八王子先発　${starter?.name || "（未入力）"}\n\n`;
     const awayTeamPitchers = innings[i].awayPitchers;
     if (innRec.top.length) {     
 out += `●${n}回表\n`;
-out += formatPlays(innRec.top);
+out += formatPlays(innRec.top, !weAreHome);
 
 const runsTop = gameInfo.homeBatting ? innings[i].away : innings[i].home;
 if (runsTop !== "") {
@@ -766,7 +754,7 @@ out += `\n`;
     }
     if (innRec.bottom.length) {
 out += `●${n}回裏\n`;
-out += formatPlays(innRec.bottom);
+out += formatPlays(innRec.bottom, weAreHome);
 
 const runsBottom = gameInfo.homeBatting ? innings[i].home : innings[i].away;
 if (runsBottom !== "") {
@@ -777,9 +765,10 @@ const pitchersBottom = weAreHome ? homeTeamPitchers : awayTeamPitchers;
 const bottomIsOpponent = (weAreHome);
 out += renderPitchers(pitchersBottom, bottomIsOpponent);
 out += `\n`;
-out += `\n`;
     }
   });
+
+
    return out;
  }
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -1193,29 +1182,33 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   records: copy
 }));
 
-            }}
-            currentInning={currentInning}
-            setCurrentInning={setCurrentInning}
-            currentHalf={currentHalf}
-            setCurrentHalf={setCurrentHalf}
-            currentOuts={currentOuts}
-            setCurrentOuts={setCurrentOuts}
-            onUndo={handleUndo}
-          />
-        </div>
+}}
+  currentInning={currentInning}
+  setCurrentInning={setCurrentInning}
+  currentHalf={currentHalf}
+  setCurrentHalf={setCurrentHalf}
+  currentOuts={currentOuts}
+  setCurrentOuts={setCurrentOuts}
+   onUndo={handleUndo}
+/>
+</div>
 
-        {/* 右ペイン：レポート出力 */}
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h1 className="text-xl font-bold mb-3">レポート出力</h1>
-          <textarea
-            value={reportText}
-            onChange={(e) => setReportText(e.target.value)}
-            className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
-            h-[600px] 
-            landscape:h-screen landscape:max-h-screen
-            overflow-auto border w-full"
+{/* 右ペイン：レポート出力 */}
+  <div className="bg-white p-4 rounded-xl shadow">
+  <h1 className="text-xl font-bold mb-3">レポート出力</h1>
+  <textarea
+  value={reportText}
+  onChange={(e) => setReportText(e.target.value)}
+  className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
+  h-[600px] 
+  landscape:h-screen landscape:max-h-screen
+  overflow-auto border w-full"
  />
-         <button
+        </div>
+      </div>
+    </div>
+  );
+}         <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
               alert("コピーしました");
