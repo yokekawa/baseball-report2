@@ -1089,7 +1089,7 @@ useEffect(() => {
         </div>
       </>
     )}
-  </div>
+</div>
           ))}
 
 {/* 交代フォーム */}
@@ -1208,7 +1208,8 @@ localStorage.setItem('baseballReportData', JSON.stringify({
       </div>
     </div>
   );
-}         <button
+}
+         <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
               alert("コピーしました");
