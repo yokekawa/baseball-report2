@@ -878,7 +878,9 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 
+items-stretch
+md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
         <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[80vh] landscape:h-screen landscape:max-h-screen">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
@@ -1204,7 +1206,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   landscape:h-screen landscape:max-h-screen
   overflow-auto border w-full"
  />
-
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
