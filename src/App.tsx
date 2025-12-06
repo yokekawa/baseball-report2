@@ -881,7 +881,7 @@ useEffect(() => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 
 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
-        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[90vh] landscape:h-screen landscape:max-h-screen">
+        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-full">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
 
           {/* 基本試合情報入力 */}
