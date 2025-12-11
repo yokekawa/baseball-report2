@@ -302,7 +302,8 @@ function AtBatForm({
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
-      const next = (useOrder % 9) + 1;
+      const currentOrder = battingNowIsAlly ? allyOrder : eOrder;
+      const next = (currentOrder % 9) + 1;
 if (battingNowIsAlly) {
         setAllyOrder(next);
       } else {
