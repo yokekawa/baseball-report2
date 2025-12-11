@@ -267,7 +267,6 @@ function AtBatForm({
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
   const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
-  const [lastBases, setLastBases] = useState("なし");
   const [fA, setfA] = useState(false);
   const [fU, setfU] = useState(false);
   useEffect(() => { setSelectedOuts(currentOuts); }, [currentInning, currentHalf, currentOuts]);
@@ -280,9 +279,7 @@ function AtBatForm({
 
 
   function handleAppend() {
-    
-    const useOrder = battingNowIsAlly ? allyOrder : eOrder;
-    const name = battingNowIsAlly ? (currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
+      const name = battingNowIsAlly ? (currentBatters()[(allyOrder - 1) % 9]?.name || lineup[(allyOrder - 1) % 9]?.name || "打者") : "";
 
     const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
@@ -301,7 +298,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${useOrder}.${name}`: `${useOrder}.`});
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${allyOrder}${name}` : `${eOrder}.`});
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -312,7 +309,6 @@ if (battingNowIsAlly) {
         seteOrder(next);
       }
     }
-setLastBases(bases);
     // アウト確定処理
     if (outsToUse === 3) {
       if (currentHalf === "表") {
@@ -323,14 +319,15 @@ setLastBases(bases);
       }
       setCurrentOuts(0);
       setSelectedOuts(0);
-      setLastBases("なし");
+      setBases("なし");
+
     } else {
       setCurrentOuts(outsToUse);
+
     }
 
     // クリア
 setFreeText("");
-setBases(bases); 
 setExtraPlay("");
 setDirection("");
 setOutcome("");
@@ -981,115 +978,48 @@ md:[&>*:last-child]:order-1">
   <div key={idx} className="border p-2 mb-3 rounded">
     <div className="mb-1 font-bold">{idx + 1}回</div>
 
-    {gameInfo.homeBatting ? (
-      <>
-        {/* 先攻（相手）の攻撃 */}
-        <div className="mb-2">
-          <span className="font-semibold">相手の攻撃</span>
-          <div className="flex gap-2 items-center mt-1">
-            <span>得点</span>
-            <input
-              type="number"
-              value={inn.away as any}
-              onChange={(e) => {
-                const copy = [...innings];
-                copy[idx].away = e.target.value as any;
-                setInnings(copy);
-              }}
-              className="w-16 p-1 border rounded"
-            />
-          </div>
-          <PitcherInputs
-            label="八王子投手"
-            pitchers={inn.awayPitchers}
-	    setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "awayPitchers", p))}
-            playerList={playerList}
-            buttonClass="bg-blue-100"
-            isOpponent={false}
+{[
+      gameInfo.homeBatting
+        ? { label: "相手の攻撃", team: "away", pitcherSide: "awayPitchers", isOpponent: true,  buttonClass: "bg-green-100" }
+        : { label: "八王子の攻撃", team: "home", pitcherSide: "homePitchers", isOpponent: false, buttonClass: "bg-blue-100" },
+
+      gameInfo.homeBatting
+        ? { label: "八王子の攻撃", team: "home", pitcherSide: "homePitchers", isOpponent: false, buttonClass: "bg-blue-100" }
+        : { label: "相手の攻撃", team: "away", pitcherSide: "awayPitchers", isOpponent: true,  buttonClass: "bg-green-100" }
+    ].map((atk, i) => (
+      <div key={i} className="mb-2">
+        <span className="font-semibold">{atk.label}</span>
+
+        <div className="flex gap-2 items-center mt-1">
+          <span>得点</span>
+          <input
+            type="number"
+            value={inn[atk.team]}
+            onChange={(e) => {
+              const copy = [...innings];
+              copy[idx][atk.team] = e.target.value;
+              setInnings(copy);
+            }}
+            className="w-16 p-1 border rounded"
           />
         </div>
 
-        {/* 後攻（ホーム／味方）の攻撃 */}
-        <div className="mb-2">
-          <span className="font-semibold">八王子の攻撃</span>
-          <div className="flex gap-2 items-center mt-1">
-            <span>得点</span>
-            <input
-              type="number"
-              value={inn.home as any}
-              onChange={(e) => {
-                const copy = [...innings];
-                copy[idx].home = e.target.value as any;
-                setInnings(copy);
-              }}
-              className="w-16 p-1 border rounded"
-            />
-          </div>
-          <PitcherInputs
-            label="相手投手"
-            pitchers={inn.homePitchers}
-            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "homePitchers", p))}
-            playerList={playerList}
-            buttonClass="bg-green-100"
-            isOpponent={true}
-          />
-        </div>
-      </>
-    ) : (
-      <>
-        {/* 先攻（ホーム／味方）の攻撃 */}
-        <div className="mb-2">
-          <span className="font-semibold">八王子の攻撃</span>
-          <div className="flex gap-2 items-center mt-1">
-            <span>得点</span>
-            <input
-              type="number"
-              value={inn.home as any}
-              onChange={(e) => {
-                const copy = [...innings];
-                copy[idx].home = e.target.value as any;
-                setInnings(copy);
-              }}
-              className="w-16 p-1 border rounded"
-            />
-          </div>
-          <PitcherInputs
-            label="相手投手"
-            pitchers={inn.homePitchers}
-            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "homePitchers", p))}
-            playerList={playerList}
-            buttonClass="bg-green-100"
-            isOpponent={true}
-          />
-        </div>
+        <PitcherInputs
+          label={atk.isOpponent ? "相手投手" : "八王子投手"}
+          pitchers={inn[atk.pitcherSide]}
+          setPitchers={(p:any) =>
+            setInnings((prev:any) =>
+              updateInningPitchers(prev, idx, atk.pitcherSide, p)
+            )
+          }
+          playerList={playerList}
+          buttonClass={atk.buttonClass}
+          isOpponent={atk.isOpponent}
+        />
+      </div>
+    ))}
 
-        {/* 後攻（相手）の攻撃 */}
-        <div className="mb-2">
-          <span className="font-semibold">相手の攻撃</span>
-          <div className="flex gap-2 items-center mt-1">
-            <span>得点</span>
-            <input
-              type="number"
-              value={inn.away as any}
-              onChange={(e) => {
-                const copy = [...innings];
-                copy[idx].away = e.target.value as any;
-                setInnings(copy);
-              }}
-              className="w-16 p-1 border rounded"
-            />
-          </div>
-          <PitcherInputs
-            label="八王子投手"
-            pitchers={inn.awayPitchers}
-            setPitchers={(p: any) => setInnings((prev: InningRow[]) => updateInningPitchers(prev, idx, "awayPitchers", p))}
-            playerList={playerList}
-            buttonClass="bg-blue-100"
-            isOpponent={false}
-          />
-        </div>
-      </>
-    )}
+
   </div>
           ))}
 
@@ -1205,6 +1135,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   landscape:h-screen landscape:max-h-screen
   overflow-auto border w-full"
  />
+
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
