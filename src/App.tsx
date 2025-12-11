@@ -570,7 +570,7 @@ export default function BaseballReportApp() {
     });
     return state;
   }
-
+  const [tab, setTab] = useState("info");
   const [gameInfo, setGameInfo] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
     if (saved) return JSON.parse(saved).gameInfo || {};
@@ -882,6 +882,27 @@ useEffect(() => {
 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
         <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[90vh] landscape:h-screen landscape:max-h-screen">
+{/* タブ切替 */}
+ <div className="flex gap-3 mb-4 border-b pb-2 text-sm">
+   <button onClick={() => setTab("info")}
+     className={tab==="info" ? "font-bold border-b-2 border-blue-600" : ""}>
+     試合情報
+   </button>
+   <button onClick={() => setTab("score")}
+     className={tab==="score" ? "font-bold border-b-2 border-blue-600" : ""}>
+     スコア & 投球数
+   </button>
+   <button onClick={() => setTab("subs")}
+     className={tab==="subs" ? "font-bold border-b-2 border-blue-600" : ""}>
+     交代
+   </button>
+   <button onClick={() => setTab("bat")}
+     className={tab==="bat" ? "font-bold border-b-2 border-blue-600" : ""}>
+     打撃・走塁
+   </button>
+ </div>
+{tab === "info" && (
+   <>
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
 
           {/* 基本試合情報入力 */}
@@ -974,8 +995,11 @@ md:[&>*:last-child]:order-1">
               </div>
             );
           })}
-
+	</>
+ )}
           {/* スコアボード & 投手入力 */}
+{tab === "score" && (
+   <>
           <h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
 {innings.map((inn:any, idx:number) => (
   <div key={idx} className="border p-2 mb-3 rounded">
@@ -1092,7 +1116,11 @@ md:[&>*:last-child]:order-1">
     )}
   </div>
           ))}
+</>
+ )}
 
+{tab === "subs" && (
+   <>
 {/* 交代フォーム */}
 <SubForm
   playerList={playerList}
@@ -1162,7 +1190,11 @@ setSubs(updated);
     </div>
   ))}
 </div>
+</>
+ )}
 
+{tab === "bat" && (
+   <>
 {/* 打席入力フォーム */}
 <AtBatForm
 lineup={lineup}
@@ -1193,6 +1225,8 @@ localStorage.setItem('baseballReportData', JSON.stringify({
    onUndo={handleUndo}
 />
 </div>
+</>
+ )}
 
 {/* 右ペイン：レポート出力 */}
   <div className="bg-white p-4 rounded-xl shadow">
