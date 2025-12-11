@@ -1010,7 +1010,7 @@ md:[&>*:last-child]:order-1">
           pitchers={inn[atk.pitcherSide]}
           setPitchers={(p:any) =>
             setInnings((prev:any) =>
-              updateInningPitchers(prev, idx, atk.pitcherSide, p)
+              updateInningPitchers(prev, idx, atk.pitcherSide as "awayPitchers" | "homePitchers", p)
             )
           }
           playerList={playerList}
@@ -1136,7 +1136,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   landscape:h-screen landscape:max-h-screen
   overflow-auto border w-full"
  />
-
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
