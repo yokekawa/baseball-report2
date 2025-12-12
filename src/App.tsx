@@ -70,7 +70,7 @@ return (
       <div className="font-medium">{label}</div>
 
       {pitchers.map((p: any, j: number) => (
-        <div key={j} className="flex items-center gap-2 mb-1">
+        <div key={j} className="mb-1">
 
           {!isOpponent && (
             <select
@@ -83,27 +83,23 @@ return (
             </select>
           )}
 
-          <input
-            type="number"
-            value={p.pitchThis}
-            placeholder="球"
-            
-            onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
-            
-            className="w-12 border rounded px-1"
-          />
-
-          <span>/</span>
-
-          <input
-            type="number"
-            value={p.pitchTotal}
-            placeholder="累計"
-            onChange={(e) => {
-              updatePitcher(j, "pitchTotal", e.target.value)
-            }}
-            className="w-14 border rounded px-1"
-          />
+<div className="flex items-center gap-1 mt-1">
+   <input
+     type="number"
+     value={p.pitchThis}
+     placeholder="球"
+     onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
+     className="w-8 border rounded px-1"
+   />
+   <span>/</span>
+   <input
+     type="number"
+     value={p.pitchTotal}
+     placeholder="計"
+     onChange={(e) => updatePitcher(j, "pitchTotal", e.target.value)}
+     className="w-8 border rounded px-1"
+   />
+ </div>
         </div>
       ))}
 
@@ -974,9 +970,10 @@ md:[&>*:last-child]:order-1">
           })}
 
           {/* スコアボード & 投手入力 */}
-          <h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
+<h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
+<div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
 {innings.map((inn:any, idx:number) => (
-  <div key={idx} className="border p-2 mb-3 rounded">
+   <div key={idx} className="border p-2 rounded inline-block align-top">
     <div className="mb-1 font-bold">{idx + 1}回</div>
 
 {[
@@ -1001,7 +998,7 @@ md:[&>*:last-child]:order-1">
               copy[idx][atk.team] = e.target.value;
               setInnings(copy);
             }}
-            className="w-16 p-1 border rounded"
+            className="w-10 p-1 border rounded text-xs"
           />
         </div>
 
@@ -1019,10 +1016,9 @@ md:[&>*:last-child]:order-1">
         />
       </div>
     ))}
-
-
   </div>
-          ))}
+ ))}
+</div>
 
 {/* 交代フォーム */}
 <SubForm
@@ -1136,6 +1132,11 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   landscape:h-screen landscape:max-h-screen
   overflow-auto border w-full"
  />
+        </div>
+      </div>
+    </div>
+  );
+}
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
