@@ -43,14 +43,16 @@ const makeInning = (): InningRow => ({
 });
 
 const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}[], isOpponent: boolean) =>
-  list.map((p) => {
+  list
+.map((p) => {
   if (!p.pitchThis && !p.pitchTotal) return "";
   const t = p.pitchThis || "";
   const T = p.pitchTotal || "";
   const slash = t && T ? "/" : "";
   const label = isOpponent ? `相手投手` : p.name;
   return `${label}　投球数　${t}${slash}${T}球\n`;
-}).join("");
+})
+    .join("");
 
 // ===== コンポーネント =====
 function PitcherInputs({ label, pitchers, setPitchers, playerList, buttonClass, isOpponent }: any) {
@@ -103,7 +105,6 @@ return (
     </div>
   </React.Fragment>
 ))}
-
 
 <button
         onClick={() =>
