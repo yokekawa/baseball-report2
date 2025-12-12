@@ -69,8 +69,9 @@ return (
     <div className="ml-3 text-sm">
       <div className="font-medium">{label}</div>
 
- {pitchers.map((p: any, j: number) => (
-   <div key={j} className="mb-1">
+{pitchers.map((p: any, j: number) => (
+  <React.Fragment key={j}>
+    <div className="mb-1">
       {!isOpponent && (
         <select
           value={p.name}
@@ -78,29 +79,33 @@ return (
           className="border rounded px-1"
         >
           <option value="">投手</option>
-          {playerList.map((n: string) => <option key={n}>{n}</option>)}
+          {playerList.map((n: string) => (
+            <option key={n}>{n}</option>
+          ))}
         </select>
       )}
 
       <div className="flex items-center gap-1 mt-1">
-          <input
-    type="number"
-    value={p.pitchThis}
-    placeholder="球"
-    onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
-    className="w-8 border rounded px-1"
-  />
-  <span>/</span>
-  <input
-    type="number"
-    value={p.pitchTotal}
-    placeholder="計"
-    onChange={(e) => updatePitcher(j, "pitchTotal", e.target.value)}
-    className="w-8 border rounded px-1"
-  />
+        <input
+          type="number"
+          value={p.pitchThis}
+          placeholder="球"
+          onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
+          className="w-8 border rounded px-1"
+        />
+        <span>/</span>
+        <input
+          type="number"
+          value={p.pitchTotal}
+          placeholder="計"
+          onChange={(e) => updatePitcher(j, "pitchTotal", e.target.value)}
+          className="w-8 border rounded px-1"
+        />
       </div>
-  </div>
-      ))}
+    </div>
+  </React.Fragment>
+))}
+
 
 <button
         onClick={() =>
