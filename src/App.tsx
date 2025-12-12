@@ -875,8 +875,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 
-md:[&>*:last-child]:order-1">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>*:first-child]:order-2 md:[&>*:last-child]:order-1">
         {/* 左ペイン：入力フォーム */}
         <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[90vh] landscape:h-screen landscape:max-h-screen">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
@@ -988,7 +987,7 @@ md:[&>*:last-child]:order-1">
         ? { label: "八王子の攻撃", team: "home", pitcherSide: "homePitchers", isOpponent: false, buttonClass: "bg-blue-100" }
         : { label: "相手の攻撃", team: "away", pitcherSide: "awayPitchers", isOpponent: true,  buttonClass: "bg-green-100" }
     ].map((atk, i) => (
-      <div key={i} className="mb-2">
+  <div key={i} className="mb-2">
         <span className="font-semibold">{atk.label}</span>
 
         <div className="flex gap-2 items-center mt-1">
@@ -1124,6 +1123,22 @@ localStorage.setItem('baseballReportData', JSON.stringify({
 />
 </div>
 
+{/* 右ペイン：レポート出力 */}
+  <div className="bg-white p-4 rounded-xl shadow">
+  <h1 className="text-xl font-bold mb-3">レポート出力</h1>
+  <textarea
+  value={reportText}
+  onChange={(e) => setReportText(e.target.value)}
+  className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
+  h-[600px] 
+  landscape:h-screen landscape:max-h-screen
+  overflow-auto border w-full"
+ />
+        </div>
+      </div>
+    </div>
+  );
+}
 {/* 右ペイン：レポート出力 */}
   <div className="bg-white p-4 rounded-xl shadow">
   <h1 className="text-xl font-bold mb-3">レポート出力</h1>
