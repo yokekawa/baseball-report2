@@ -69,8 +69,8 @@ return (
     <div className="ml-3 text-sm">
       <div className="font-medium">{label}</div>
 
-      {pitchers.map((p: any, j: number) => (
-<div key={j} className="mb-1">
+ {pitchers.map((p: any, j: number) => (
+   <div key={j} className="mb-1">
       {!isOpponent && (
         <select
           value={p.name}
