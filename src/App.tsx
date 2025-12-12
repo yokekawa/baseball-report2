@@ -71,7 +71,6 @@ return (
 
       {pitchers.map((p: any, j: number) => (
 <div key={j} className="mb-1">
-    <>
       {!isOpponent && (
         <select
           value={p.name}
@@ -100,7 +99,6 @@ return (
     className="w-8 border rounded px-1"
   />
       </div>
-    </>
   </div>
       ))}
 
