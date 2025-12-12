@@ -974,7 +974,8 @@ useEffect(() => {
           {/* スコアボード & 投手入力 */}
 <h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
 <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
-{innings.map((inn:any, idx:number) => (
+{innings.map((inn:any, idx:number) => {
+  return (
    <div key={idx} className="border p-2 rounded inline-block align-top">
     <div className="mb-1 font-bold">{idx + 1}回</div>
 
@@ -1019,7 +1020,8 @@ useEffect(() => {
       </div>
     ))}
   </div>
- ))}
+  );
+})}
 </div>
 
 {/* 交代フォーム */}
@@ -1136,6 +1138,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
     </div>
   );
 }
+
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
