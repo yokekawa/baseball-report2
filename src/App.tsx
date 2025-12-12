@@ -1133,6 +1133,50 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   onChange={(e) => setReportText(e.target.value)}
   className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] landscape:h-screen landscape:max-h-screen overflow-auto border w-full"
  />
+         <button
+            onClick={() => {
+              navigator.clipboard.writeText(reportText);
+              alert("コピーしました");
+            }}
+            className="mt-3 px-4 py-2 bg-green-600 text-white rounded"
+          >
+            📋 コピー
+          </button>
+
+<button
+  onClick={() => {
+    if (window.confirm('打席記録をすべて削除します。よろしいですか？')) {
+      if (window.confirm('本当によろしいですか？')) {
+        const clearedRecords = Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
+        const clearedInnings = Array.from({ length: 7 }, makeInning);
+        setRecords(clearedRecords);
+        setInnings(clearedInnings);
+        setCurrentInning(1);
+        setCurrentHalf('表');
+        setCurrentOuts(0);
+        setAllyOrder(1);
+        seteOrder(1);
+
+        const saved = JSON.parse(localStorage.getItem('baseballReportData') || '{}');
+        localStorage.setItem('baseballReportData', JSON.stringify({
+          ...saved,
+          innings: clearedInnings,
+          records: clearedRecords,
+          currentInning: 1,
+          currentHalf: '表',
+          currentOuts: 0,
+          allyOrder: 1,
+          enemyOrder: 1,
+        }));
+
+        alert('打席記録・得点・投球数・現在回情報をすべて初期化しました。');
+      }
+    }
+  }}
+  className="mt-3 ml-2 px-4 py-2 bg-red-600 text-white rounded"
+>
+  🗑 次の試合へ(打席結果全削除）
+</button>
         </div>
       </div>
     </div>
