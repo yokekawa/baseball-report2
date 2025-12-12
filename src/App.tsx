@@ -1123,6 +1123,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   setCurrentOuts={setCurrentOuts}
    onUndo={handleUndo}
 />
+</div>
 
 {/* 右ペイン：レポート出力 */}
   <div className="bg-white p-4 rounded-xl shadow">
@@ -1132,11 +1133,6 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   onChange={(e) => setReportText(e.target.value)}
   className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] landscape:h-screen landscape:max-h-screen overflow-auto border w-full"
  />
-        </div>
-      </div>
-    </div>
-  );
-}
         </div>
       </div>
     </div>
