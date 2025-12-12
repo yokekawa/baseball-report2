@@ -84,7 +84,21 @@ return (
       )}
 
       <div className="flex items-center gap-1 mt-1">
-        ...
+          <input
+    type="number"
+    value={p.pitchThis}
+    placeholder="球"
+    onChange={(e) => updatePitcher(j, "pitchThis", e.target.value)}
+    className="w-8 border rounded px-1"
+  />
+  <span>/</span>
+  <input
+    type="number"
+    value={p.pitchTotal}
+    placeholder="計"
+    onChange={(e) => updatePitcher(j, "pitchTotal", e.target.value)}
+    className="w-8 border rounded px-1"
+  />
       </div>
     </>
   </div>
