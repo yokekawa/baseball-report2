@@ -1129,26 +1129,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
   <textarea
   value={reportText}
   onChange={(e) => setReportText(e.target.value)}
-  className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
-  h-[600px] 
-  landscape:h-screen landscape:max-h-screen
-  overflow-auto border w-full"
- />
-        </div>
-      </div>
-    </div>
-  );
-}
-{/* 右ペイン：レポート出力 */}
-  <div className="bg-white p-4 rounded-xl shadow">
-  <h1 className="text-xl font-bold mb-3">レポート出力</h1>
-  <textarea
-  value={reportText}
-  onChange={(e) => setReportText(e.target.value)}
-  className="whitespace-pre-wrap bg-gray-50 p-3 rounded 
-  h-[600px] 
-  landscape:h-screen landscape:max-h-screen
-  overflow-auto border w-full"
+  className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] landscape:h-screen landscape:max-h-screen overflow-auto border w-full"
  />
         </div>
       </div>
