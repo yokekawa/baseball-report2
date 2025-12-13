@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
  // 投手配列を安全に更新する共通関数
  function updateInningPitchers(prevInnings: any[], idx: number, side: "awayPitchers" | "homePitchers", p: any) {
    return prevInnings.map((row, i) => {
@@ -41,7 +41,6 @@ const makeInning = (): InningRow => ({
   awayPitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
   homePitchers: [{ name: "", pitchThis: "", pitchTotal: "" }],
 });
-
 const renderPitchers = (list: {name:string; pitchThis:string; pitchTotal:string}[], isOpponent: boolean) =>
   list
 .map((p) => {
@@ -131,6 +130,7 @@ function SubForm({ playerList, posList, lineup, subs, setSubs, onAdd, currentInn
   const [newPos, setNewPos] = useState("");
   const [inning, setInning] = useState(currentInning || 1);
   const [half, setHalf] = useState(currentHalf || "表");
+
 
 const FielderNow = (() => {
   const active = currentBatters().map((l: any) => l.name).filter(Boolean);
@@ -256,6 +256,7 @@ function AtBatForm({
   currentOuts,
   setCurrentOuts,
   onUndo,
+  onThreeOut,
 }: any) {
   const [freeText, setFreeText] = useState("");
   const [bases, setBases] = useState("なし");
@@ -311,6 +312,7 @@ if (battingNowIsAlly) {
     }
     // アウト確定処理
     if (outsToUse === 3) {
+	onThreeOut?.();
       if (currentHalf === "表") {
         setCurrentHalf("裏");
       } else {
@@ -550,6 +552,12 @@ setOutcome("");
 
 // ===== メインアプリ =====
 export default function BaseballReportApp() {
+  const scoreboardRef = useRef<HTMLDivElement | null>(null);
+  const scrollToScoreboard = () => {
+   setTimeout(() => {
+     scoreboardRef.current?.scrollIntoView({ behavior: "smooth" });
+   }, 0);
+ };
   const playerList = DEFAULT_PLAYERS;
   // subs の履歴から最新の出場状態を再構築する関数
   function rebuildBattingOrderState(lineup: any, subs: any) {
@@ -972,8 +980,11 @@ useEffect(() => {
           })}
 
           {/* スコアボード & 投手入力 */}
-<h2 className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
-<div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
+<h2 ref={scoreboardRef} className="text-lg font-semibold mb-2">
+   スコアボード & 投球数
+ </h2>
+ <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
+
 {innings.map((inn:any, idx:number) => {
   return (
    <div key={idx} className="border p-2 rounded inline-block align-top">
@@ -1103,6 +1114,7 @@ setAllyOrder={setAllyOrder}
 eOrder={eOrder}
 seteOrder={seteOrder}
 homeBatting={gameInfo.homeBatting}
+onThreeOut={scrollToScoreboard}
 onAppend={(i: number, h: "表" | "裏", rec: PlayRecord) => {
 const copy = [...records];
 (h === "表" ? copy[i].top : copy[i].bottom).push(rec);
