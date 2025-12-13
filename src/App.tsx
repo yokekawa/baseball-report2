@@ -890,13 +890,14 @@ useEffect(() => {
  landscape:grid-cols-2
   md:grid-cols-2
   gap-6
+ items-stretch
  landscape:[&>*:first-child]:order-2
  landscape:[&>*:last-child]:order-1
   md:[&>*:first-child]:order-2
   md:[&>*:last-child]:order-1
 ">
         {/* 左ペイン：入力フォーム */}
-        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-[90vh] landscape:h-screen landscape:max-h-screen">
+        <div className="bg-white p-4 rounded-xl shadow overflow-y-auto h-full">
           <h1 className="text-xl font-bold mb-3">試合情報入力</h1>
 
           {/* 基本試合情報入力 */}
@@ -1149,12 +1150,12 @@ localStorage.setItem('baseballReportData', JSON.stringify({
 </div>
 
 {/* 右ペイン：レポート出力 */}
-  <div className="bg-white p-4 rounded-xl shadow">
+  <div className="bg-white p-4 rounded-xl shadow h-full flex flex-col">
   <h1 className="text-xl font-bold mb-3">レポート出力</h1>
   <textarea
   value={reportText}
   onChange={(e) => setReportText(e.target.value)}
-  className="whitespace-pre-wrap bg-gray-50 p-3 rounded h-[600px] landscape:h-screen landscape:max-h-screen overflow-auto border w-full"
+  className="whitespace-pre-wrap bg-gray-50 p-3 rounded flex-1 overflow-auto border w-full"
  />
          <button
             onClick={() => {
