@@ -72,7 +72,7 @@ return (
 {pitchers.map((p: any, j: number) => (
   <React.Fragment key={j}>
     <div className="mb-1">
-      {!isOpponent && (
+      {isOpponent && (
         <select
           value={p.name}
           onChange={(e) => updatePitcher(j, "name", e.target.value)}
@@ -297,7 +297,7 @@ function AtBatForm({
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
     const advancedOrder = !extraPlay; 
-    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${allyOrder}${name}` : `${eOrder}.`});
+    onAppend(idx, currentHalf, { line, deltaOuts, advancedOrder, batterName: battingNowIsAlly ? `${allyOrder}.${name}` : `${eOrder}.`});
 
     // 打順を進める（走塁のみは進めない）
     if (!extraPlay) {
@@ -1006,7 +1006,7 @@ useEffect(() => {
         </div>
 
         <PitcherInputs
-          label={atk.isOpponent ? "相手投手" : "八王子投手"}
+          label={atk.isOpponent ? "八王子投手" : "相手投手"}
           pitchers={inn[atk.pitcherSide]}
           setPitchers={(p:any) =>
             setInnings((prev:any) =>
