@@ -558,7 +558,15 @@ export default function BaseballReportApp() {
      scoreboardRef.current?.scrollIntoView({ behavior: "smooth" });
    }, 0);
  };
-  const playerList = DEFAULT_PLAYERS;
+    const [players, setPlayers] = useState<string[]>(() => {
+    const saved = localStorage.getItem('baseballReportData');
+    if (saved) return JSON.parse(saved).players || DEFAULT_PLAYERS;
+    return DEFAULT_PLAYERS;
+  });
+  const [playersText, setPlayersText] = useState(() => players.join("\n"));
+  const [showPlayersEditor, setShowPlayersEditor] = useState(false);
+  const playerList = players;
+
   // subs の履歴から最新の出場状態を再構築する関数
   function rebuildBattingOrderState(lineup: any, subs: any) {
     let state = lineup.map((p: any) => ({ ...p }));
@@ -857,11 +865,11 @@ useEffect(() => {
 // 入力データを自動保存
 useEffect(() => {
   localStorage.setItem('baseballReportData', JSON.stringify({
-    gameInfo, innings, lineup, subs, records,
+    gameInfo, innings, lineup, subs, records, players,
     allyOrder, eOrder, currentInning, currentHalf, currentOuts,
     reportText
   }));
-}, [gameInfo, innings, lineup, subs, records, allyOrder, eOrder, currentInning, currentHalf, currentOuts, reportText]);
+}, [gameInfo, innings, lineup, subs, records, players, allyOrder, eOrder, currentInning, currentHalf, currentOuts, reportText]);
 // 初回ロード時に復元
 useEffect(() => {
   const saved = localStorage.getItem('baseballReportData');
@@ -872,6 +880,7 @@ useEffect(() => {
     setLineup(data.lineup || lineup);
     setSubs(data.subs || []);
     setRecords(data.records || records);
+    setPlayers(data.players || DEFAULT_PLAYERS);
     setAllyOrder(data.allyOrder || 1);
     seteOrder(data.eOrder || 1);
     setCurrentInning(data.currentInning || 1);
@@ -880,6 +889,10 @@ useEffect(() => {
     setReportText(data.reportText || "");
   }
 }, []);
+
+useEffect(() => {
+  setPlayersText(players.join("\n"));
+}, [players]);
 
   return (
     <div className="min-h-screen p-6 bg-gray-100">
@@ -948,6 +961,35 @@ useEffect(() => {
               <option value="先攻">先攻</option>
               <option value="後攻">後攻</option>
             </select>
+          </div>
+
+          {/* 選手名リスト編集 */}
+          <div className="mb-3 border rounded p-2">
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-semibold text-sm">選手名リスト（1行=1人）</div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowPlayersEditor(v => !v)}
+                  className="px-2 py-0.5 text-xs bg-blue-100 rounded"
+                >
+                   {showPlayersEditor ? "閉じる" : "編集"}
+                </button>
+              <button
+                onClick={() => setPlayers(DEFAULT_PLAYERS)}
+                className="px-2 py-0.5 text-xs bg-gray-200 rounded"
+              >初期に戻す</button>
+             </div>
+            </div>
+          {showPlayersEditor && (
+            <textarea
+              value={playersText}
+              onChange={(e) => setPlayersText(e.target.value)}
+              onBlur={() =>
+                 setPlayers(playersText.split(/\r?\n/).map(s=>s.trim()).filter(Boolean))
+              }
+              className="w-full border rounded p-2 text-sm h-28"
+            />
+          )}
           </div>
 
           {/* 先発メンバー入力（守備重複防止） */}
