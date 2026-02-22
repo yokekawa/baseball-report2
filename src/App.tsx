@@ -918,8 +918,8 @@ useEffect(() => {
           <h2 className="text-lg font-semibold mb-2">基本情報</h2>
           {Object.entries({
             title: "試合名",
-            home: "ホームチーム",
-            away: "アウェイチーム",
+            home: "自チーム",
+            away: "相手チーム",
             date: "日付",
             place: "場所",
             weather: "天候",
@@ -977,7 +977,7 @@ useEffect(() => {
               <button
                 onClick={() => setPlayers(DEFAULT_PLAYERS)}
                 className="px-2 py-0.5 text-xs bg-gray-200 rounded"
-              >初期に戻す</button>
+              >25メンバーに戻す</button>
              </div>
             </div>
           {showPlayersEditor && (
