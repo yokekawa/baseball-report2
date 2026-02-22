@@ -1223,6 +1223,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
         const clearedInnings = Array.from({ length: 7 }, makeInning);
         setRecords(clearedRecords);
         setInnings(clearedInnings);
+        setSubs([]);
         setCurrentInning(1);
         setCurrentHalf('表');
         setCurrentOuts(0);
@@ -1234,6 +1235,7 @@ localStorage.setItem('baseballReportData', JSON.stringify({
           ...saved,
           innings: clearedInnings,
           records: clearedRecords,
+          subs: [],
           currentInning: 1,
           currentHalf: '表',
           currentOuts: 0,
