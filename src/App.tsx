@@ -1140,6 +1140,7 @@ export default function BaseballReportApp() {
             onChange={(e) => setReportText(e.target.value)}
             className="whitespace-pre-wrap bg-gray-50 p-3 rounded border w-full overflow-auto min-h-[60vh] landscape:min-h-0 landscape:flex-1"
           />
+
          <button
             onClick={() => {
               navigator.clipboard.writeText(reportText);
