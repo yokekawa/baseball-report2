@@ -1133,13 +1133,19 @@ export default function BaseballReportApp() {
           />
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow flex flex-col landscape:h-screen landscape:max-h-screen">
-          <h1 className="text-xl font-bold mb-3">レポート出力</h1>
-          <textarea
-            value={reportText}
-            onChange={(e) => setReportText(e.target.value)}
-            className="whitespace-pre-wrap bg-gray-50 p-3 rounded border w-full overflow-auto min-h-[60vh] landscape:min-h-0 landscape:flex-1"
-          />
+{/* 右ペイン：レポート出力 */}
+  <div className="bg-white p-4 rounded-xl shadow flex flex-col
+   landscape:h-screen landscape:max-h-screen">
+  <h1 className="text-xl font-bold mb-3">レポート出力</h1>
+  <textarea
+  value={reportText}
+  onChange={(e) => setReportText(e.target.value)}
+  className="
+    whitespace-pre-wrap bg-gray-50 p-3 rounded border w-full overflow-auto
+   min-h-[60vh]
+   landscape:min-h-0 landscape:flex-1
+  "
+ />
 
          <button
             onClick={() => {
