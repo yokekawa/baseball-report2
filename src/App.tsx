@@ -240,7 +240,7 @@ function SubForm({
     const dhOrder = allyDHPlayer.order;
     switch (dhPattern) {
       case "pat1":
-        return `投手 ${currentPitcherName || "（未設定）"} が ${dhOrder}番打者（${dhName}）の打順を引き継ぎます。${dhName} は抹消されます。`;
+        return `投手 ${currentPitcherName || "（未設定）"} が ${dhOrder}番打者（${dhName}）の打順を引き継ぎます。${dhName} は退きます。`;
       case "pat2":
         return `${dhName} が ${dhNewPos || "（守備位置未選択）"} として守備につきます。${dhFielderOut ? `${dhFielderOut} が退きます。` : ""}投手はそのまま（打順には入りません）。`;
       case "pat3":
