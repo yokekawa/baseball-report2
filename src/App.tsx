@@ -418,7 +418,7 @@ function SubForm({
                       <span className="w-32 text-red-600 font-medium">退く選手（必須）</span>
                       <select value={dhFielderOut} onChange={(e) => setDhFielderOut(e.target.value)} className={`p-1 border rounded ${!dhFielderOut ? "border-red-400" : ""}`}>
                         <option value="">選択してください</option>
-                        {FielderNow.filter(n => n !== allyDHPlayer.name).map(n => <option key={n}>{n}</option>)}
+                        {FielderNow.filter((n: string) => n !== allyDHPlayer.name).map((n: string) => <option key={n}>{n}</option>)}
                       </select>
                     </div>
                   </div>
@@ -437,14 +437,14 @@ function SubForm({
                       <span className="w-32 text-red-600 font-medium">退く選手（必須）</span>
                       <select value={dhFielderOut} onChange={(e) => setDhFielderOut(e.target.value)} className={`p-1 border rounded ${!dhFielderOut ? "border-red-400" : ""}`}>
                         <option value="">選択してください</option>
-                        {FielderNow.filter(n => n !== allyDHPlayer.name).map(n => <option key={n}>{n}</option>)}
+                        {FielderNow.filter((n: string) => n !== allyDHPlayer.name).map((n: string) => <option key={n}>{n}</option>)}
                       </select>
                     </div>
                     <div className="flex gap-2 items-center text-sm">
                       <span className="w-32">新しい投手</span>
                       <select value={newPitcher} onChange={(e) => setNewPitcher(e.target.value)} className="p-1 border rounded">
                         <option value="">選択</option>
-                        {benchPlayers.map(n => <option key={n}>{n}</option>)}
+                        {benchPlayers.map((n: string) => <option key={n}>{n}</option>)}
                       </select>
                     </div>
                   </div>
@@ -456,7 +456,7 @@ function SubForm({
                       <span className="w-32">代打選手</span>
                       <select value={dhPinchHitter} onChange={(e) => setDhPinchHitter(e.target.value)} className="p-1 border rounded">
                         <option value="">選択</option>
-                        {benchPlayers.map(n => <option key={n}>{n}</option>)}
+                        {benchPlayers.map((n: string) => <option key={n}>{n}</option>)}
                       </select>
                     </div>
                     <div className="flex gap-2 items-center text-sm">
@@ -470,7 +470,7 @@ function SubForm({
                       <span className="w-32 text-red-600 font-medium">退く選手（必須）</span>
                       <select value={dhPinchFielderOut} onChange={(e) => setDhPinchFielderOut(e.target.value)} className={`p-1 border rounded ${!dhPinchFielderOut ? "border-red-400" : ""}`}>
                         <option value="">選択してください</option>
-                        {FielderNow.filter(n => n !== allyDHPlayer.name).map(n => <option key={n}>{n}</option>)}
+                        {FielderNow.filter((n: string) => n !== allyDHPlayer.name).map((n: string) => <option key={n}>{n}</option>)}
                       </select>
                     </div>
                   </div>
