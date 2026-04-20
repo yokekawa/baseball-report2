@@ -813,6 +813,7 @@ function AtBatForm({
         <optgroup label="進塁打・小技">
           <option value="犠牲フライ">犠牲フライ</option>
           <option value="送りバント">送りバント</option>
+          <option value="セーフティバント">セーフティバント</option>
           <option value="スクイズ">スクイズ</option>
           <option value="セーフティスクイズ">セーフティスクイズ</option>
         </optgroup>
