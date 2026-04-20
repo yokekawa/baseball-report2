@@ -207,7 +207,7 @@ function SubForm({
     const base = lineup.filter((l: any) => l && l.name).map((l: any) => l.name);
     let current = [...base, ...active];
     subs.forEach((s: any) => {
-      if (s.type === '交代' || s.type === '代打') {
+      if (s.type === '交代' || s.type === '代打' || s.type === '代走') {
         current = current.filter((n: string) => n !== s.out);
         current.push(s.in);
       }
@@ -342,6 +342,11 @@ function SubForm({
       const sub = { type, out, in: inn, inning, half };
       setSubs((prev: any) => [...prev, sub]);
       onAdd(sub);
+    } else if (type === "代走") {
+      if (!out || !inn) return;
+      const sub = { type, out, in: inn, inning, half };
+      setSubs((prev: any) => [...prev, sub]);
+      onAdd(sub);
     } else if (type === "守備変更") {
       if (!out || !oldPos || !newPos) return;
       const sub = { type, out, oldPos, newPos, inning, half };
@@ -356,16 +361,28 @@ function SubForm({
 
   return (
     <div className="mt-4 p-2 border rounded">
-      <h3 className="font-semibold mb-2">交代・守備変更・代打・DH解除</h3>
+      <h3 className="font-semibold mb-2">交代・守備変更・代打・代走・DH解除</h3>
       <div className="flex flex-wrap gap-2 mb-2">
         <select value={type} onChange={(e) => setType(e.target.value)} className="p-1 border rounded">
           <option>交代</option>
           <option>守備変更</option>
           <option>代打</option>
+          <option>代走</option>
           {(canCancelAllyDH || canCancelEnemyDH) && <option>DH解除</option>}
         </select>
 
-        {type === "DH解除" ? (
+        {type === "代走" ? (
+          <>
+            <select value={out} onChange={(e) => setOut(e.target.value)} className="p-1 border rounded">
+              <option value="">退く選手（走者）</option>
+              {FielderNow.map((n: string) => <option key={n}>{n}</option>)}
+            </select>
+            <select value={inn} onChange={(e) => setInn(e.target.value)} className="p-1 border rounded">
+              <option value="">入る選手（代走）</option>
+              {benchPlayers.map((n: string) => <option key={n}>{n}</option>)}
+            </select>
+          </>
+        ) : type === "DH解除" ? (
           <div className="flex flex-col gap-2 w-full">
 
             {/* 自チーム／相手チーム切替 */}
@@ -926,9 +943,9 @@ export default function BaseballReportApp() {
   ): LineupEntry[] {
     let state = lineup.map((p) => ({ ...p }));
 
-    // 交代・代打・守備変更を反映
+    // 交代・代打・代走・守備変更を反映
     subs.forEach((s: any) => {
-      if (s.type === "交代" || s.type === "代打") {
+      if (s.type === "交代" || s.type === "代打" || s.type === "代走") {
         state = state.map((l) =>
           l.name === s.out ? { ...l, name: s.in, pos: s.pos ?? l.pos } : l
         );
@@ -1170,6 +1187,9 @@ export default function BaseballReportApp() {
           NameNow = s.in;
         } else if (s.type === "代打" && s.out === NameNow) {
           line += `→${s.inning}回${s.half} ${s.in}(代打)`;
+          NameNow = s.in;
+        } else if (s.type === "代走" && s.out === NameNow) {
+          line += `→${s.inning}回${s.half} ${s.in}(代走)`;
           NameNow = s.in;
         } else if (s.type === "守備変更" && s.out === NameNow) {
           line += `→${s.inning}回${s.half}(${s.newPos})`;
@@ -1620,7 +1640,9 @@ export default function BaseballReportApp() {
                   ? { line: `${s.type}：${s.out}(${s.oldPos})→(${s.newPos})`, deltaOuts: 0, advancedOrder: false, batterName: "" }
                   : s.type === "代打"
                     ? { line: `${s.out}→${s.in}(代打)`, deltaOuts: 0, advancedOrder: false, batterName: "" }
-                    : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false, batterName: "" };
+                    : s.type === "代走"
+                      ? { line: `${s.out}→${s.in}(代走)`, deltaOuts: 0, advancedOrder: false, batterName: "" }
+                      : { line: `${s.type}：${s.out}→${s.in}(${s.pos})`, deltaOuts: 0, advancedOrder: false, batterName: "" };
               const copy = [...records];
               if (s.half === '表') copy[idx].top.push(rec); else copy[idx].bottom.push(rec);
               setRecords(copy);
@@ -1638,7 +1660,9 @@ export default function BaseballReportApp() {
                     ? `(${s.oldPos})→(${s.newPos})`
                     : s.type === '代打'
                       ? `→${s.in}`
-                      : `(${s.pos})→${s.in}(${s.pos})`}
+                      : s.type === '代走'
+                        ? `→${s.in}`
+                        : `(${s.pos})→${s.in}(${s.pos})`}
                 </span>
                 <button
                   onClick={() => {
