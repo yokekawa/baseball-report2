@@ -615,6 +615,7 @@ function AtBatForm({
   const [bases, setBases] = useState("なし");
   const [selectedOuts, setSelectedOuts] = useState(currentOuts);
   const [extraPlay, setExtraPlay] = useState("");
+  const [extraPlayText, setExtraPlayText] = useState("");
   const [direction, setDirection] = useState("");
   const [outcome, setOutcome] = useState("");
   const battingNowIsAlly = (homeBatting && currentHalf === "裏") || (!homeBatting && currentHalf === "表");
@@ -640,7 +641,9 @@ function AtBatForm({
     const name = battingNowIsAlly
       ? (batters[(allyOrder - 1) % allyMaxOrder]?.name || lineup[(allyOrder - 1) % allyMaxOrder]?.name || "打者")
       : "";
-    const text = extraPlay ? extraPlay : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
+    // 走塁プレー：プルダウン選択値＋自由追記を結合
+    const extraPlayFull = [extraPlay, extraPlayText].filter(Boolean).join(' ');
+    const text = extraPlayFull ? extraPlayFull : ((direction || "") + (outcome || "")) + (freeText ? ` ${freeText}` : "");
     const outsToUse = Number(selectedOuts) || 0;
 
     let line = `${text}　${outsToUse}死`;
@@ -653,7 +656,7 @@ function AtBatForm({
 
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
     const deltaOuts = Math.max(0, outsToUse - currentOuts);
-    const advancedOrder = !extraPlay;
+    const advancedOrder = !extraPlayFull;
     onAppend(idx, currentHalf, {
       line,
       deltaOuts,
@@ -661,7 +664,7 @@ function AtBatForm({
       batterName: battingNowIsAlly ? `${allyOrder}.${name}` : `${eOrder}.`
     });
 
-    if (!extraPlay) {
+    if (!extraPlayFull) {
       if (battingNowIsAlly) {
         setAllyOrder((prev: number) => (prev % allyMaxOrder) + 1);
       } else {
@@ -686,6 +689,7 @@ function AtBatForm({
 
     setFreeText("");
     setExtraPlay("");
+    setExtraPlayText("");
     setDirection("");
     setOutcome("");
   }
@@ -843,11 +847,8 @@ function AtBatForm({
       <label className="block text-sm mb-1">走塁プレー</label>
       <div className="flex flex-col gap-2 mb-3">
         <select
-          value={extraPlay.split(' ')[0] || ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            setExtraPlay((prev) => `${val} ${prev.split(' ').slice(1).join(' ')}`.trim());
-          }}
+          value={extraPlay}
+          onChange={(e) => setExtraPlay(e.target.value)}
           className="w-full p-2 border rounded"
         >
           {extraOptions.map((opt) => (
@@ -856,11 +857,8 @@ function AtBatForm({
         </select>
         <input
           type="text"
-          value={extraPlay.split(' ').slice(1).join(' ')}
-          onChange={(e) => {
-            const val = e.target.value;
-            setExtraPlay((prev) => `${prev.split(' ')[0]} ${val}`.trim());
-          }}
+          value={extraPlayText}
+          onChange={(e) => setExtraPlayText(e.target.value)}
           placeholder="自由追記（例：キャッチャー悪送球など）"
           className="w-full p-2 border rounded"
         />
