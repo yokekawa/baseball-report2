@@ -844,7 +844,10 @@ function AtBatForm({
       <div className="flex flex-col gap-2 mb-3">
         <select
           value={extraPlay.split(' ')[0] || ''}
-          onChange={(e) => setExtraPlay((prev) => `${e.target.value} ${prev.split(' ').slice(1).join(' ')}`.trim())}
+          onChange={(e) => {
+            const val = e.target.value;
+            setExtraPlay((prev) => `${val} ${prev.split(' ').slice(1).join(' ')}`.trim());
+          }}
           className="w-full p-2 border rounded"
         >
           {extraOptions.map((opt) => (
@@ -854,7 +857,10 @@ function AtBatForm({
         <input
           type="text"
           value={extraPlay.split(' ').slice(1).join(' ')}
-          onChange={(e) => setExtraPlay((prev) => `${prev.split(' ')[0]} ${e.target.value}`.trim())}
+          onChange={(e) => {
+            const val = e.target.value;
+            setExtraPlay((prev) => `${prev.split(' ')[0]} ${val}`.trim());
+          }}
           placeholder="自由追記（例：キャッチャー悪送球など）"
           className="w-full p-2 border rounded"
         />
