@@ -1009,7 +1009,7 @@ export default function BaseballReportApp() {
 
   const [innings, setInnings] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
-    return saved ? JSON.parse(saved).innings || Array.from({ length: 7 }, makeInning) : Array.from({ length: 7 }, makeInning);
+    return saved ? JSON.parse(saved).innings || Array.from({ length: 20 }, makeInning) : Array.from({ length: 20 }, makeInning);
   });
 
   // lineup: 常に9行（DH制でも投手は別枠）
@@ -1048,7 +1048,7 @@ export default function BaseballReportApp() {
 
   const [records, setRecords] = useState(() => {
     const saved = localStorage.getItem('baseballReportData');
-    return saved ? JSON.parse(saved).records || Array.from({ length: 7 }, () => ({ top: [], bottom: [] })) : Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
+    return saved ? JSON.parse(saved).records || Array.from({ length: 20 }, () => ({ top: [], bottom: [] })) : Array.from({ length: 20 }, () => ({ top: [], bottom: [] }));
   });
 
   const [reportText, setReportText] = useState(() => {
@@ -1150,7 +1150,8 @@ export default function BaseballReportApp() {
     rec: any[],
     dhCancelA: DHCancel | null,
     dhCancelE: DHCancel | null,
-    pitcherEntry: PitcherEntry
+    pitcherEntry: PitcherEntry,
+    currentInning: number
   ) {
     const totalAway = inn.reduce((a: number, b: any) => a + Number(b.away || 0), 0);
     const totalHome = inn.reduce((a: number, b: any) => a + Number(b.home || 0), 0);
@@ -1169,13 +1170,22 @@ export default function BaseballReportApp() {
     if (dhNotes.length) out += `　（${dhNotes.join("・")}）`;
     out += `\n\n`;
 
-    out += ` 　  　　　/1234567/計\n`;
+    // 実際にデータがある最終回を計算（最低でも試合設定回数まで表示）
+    const lastInningWithData = Math.max(
+      currentInning,
+      inn.reduce((max: number, i: any, idx: number) =>
+        (i.away !== "" || i.home !== "" || rec[idx]?.top?.length || rec[idx]?.bottom?.length) ? idx + 1 : max, 0)
+    );
+    const displayInnings = inn.slice(0, lastInningWithData);
+    const inningHeader = Array.from({ length: lastInningWithData }, (_, i) => i + 1).join("");
+
+    out += ` 　  　　　/${inningHeader}/計\n`;
     if (gInfo.homeBatting) {
-      out += ` 【${gInfo.away}】/${inn.map((i: any) => i.away || "").join("")}/${totalAway}\n`;
-      out += ` 【${gInfo.home}】/${inn.map((i: any) => i.home || "").join("")}/${totalHome}\n\n`;
+      out += ` 【${gInfo.away}】/${displayInnings.map((i: any) => i.away !== "" ? i.away : " ").join("")}/${totalAway}\n`;
+      out += ` 【${gInfo.home}】/${displayInnings.map((i: any) => i.home !== "" ? i.home : " ").join("")}/${totalHome}\n\n`;
     } else {
-      out += ` 【${gInfo.home}】/${inn.map((i: any) => i.home || "").join("")}/${totalHome}\n`;
-      out += ` 【${gInfo.away}】/${inn.map((i: any) => i.away || "").join("")}/${totalAway}\n\n`;
+      out += ` 【${gInfo.home}】/${displayInnings.map((i: any) => i.home !== "" ? i.home : " ").join("")}/${totalHome}\n`;
+      out += ` 【${gInfo.away}】/${displayInnings.map((i: any) => i.away !== "" ? i.away : " ").join("")}/${totalAway}\n\n`;
     }
 
     out += `【先発メンバー】\n`;
@@ -1269,8 +1279,8 @@ export default function BaseballReportApp() {
   }
 
   useEffect(() => {
-    setReportText(generateReport(gameInfo, innings, lineup, subs, records, dhCancelAlly, dhCancelEnemy, allyPitcher));
-  }, [gameInfo, innings, lineup, subs, records, dhCancelAlly, dhCancelEnemy, allyPitcher]);
+    setReportText(generateReport(gameInfo, innings, lineup, subs, records, dhCancelAlly, dhCancelEnemy, allyPitcher, currentInning));
+  }, [gameInfo, innings, lineup, subs, records, dhCancelAlly, dhCancelEnemy, allyPitcher, currentInning]);
 
   function handleUndo() {
     const idx = Math.max(1, Math.min(currentInning, 20)) - 1;
@@ -1576,7 +1586,7 @@ export default function BaseballReportApp() {
 
           <h2 ref={scoreboardRef} className="text-lg font-semibold mb-2">スコアボード & 投球数</h2>
           <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2">
-            {innings.map((inn: any, idx: number) => {
+            {innings.slice(0, Math.max(7, currentInning + 1)).map((inn: any, idx: number) => {
               return (
                 <div key={idx} className="border p-2 rounded inline-block align-top">
                   <div className="mb-1 font-bold">{idx + 1}回</div>
@@ -1737,8 +1747,8 @@ export default function BaseballReportApp() {
             onClick={() => {
               if (window.confirm('打席記録をすべて削除します。よろしいですか？')) {
                 if (window.confirm('本当によろしいですか？')) {
-                  const clearedRecords = Array.from({ length: 7 }, () => ({ top: [], bottom: [] }));
-                  const clearedInnings = Array.from({ length: 7 }, makeInning);
+                  const clearedRecords = Array.from({ length: 20 }, () => ({ top: [], bottom: [] }));
+                  const clearedInnings = Array.from({ length: 20 }, makeInning);
                   setRecords(clearedRecords);
                   setInnings(clearedInnings);
                   setSubs([]);
