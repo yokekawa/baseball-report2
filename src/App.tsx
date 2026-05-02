@@ -1170,8 +1170,9 @@ export default function BaseballReportApp() {
     if (dhNotes.length) out += `　（${dhNotes.join("・")}）`;
     out += `\n\n`;
 
-    // 実際にデータがある最終回を計算（最低でも試合設定回数まで表示）
+    // 最低7回表示、延長は実際に進んだ回まで表示
     const lastInningWithData = Math.max(
+      7,
       currentInning,
       inn.reduce((max: number, i: any, idx: number) =>
         (i.away !== "" || i.home !== "" || rec[idx]?.top?.length || rec[idx]?.bottom?.length) ? idx + 1 : max, 0)
