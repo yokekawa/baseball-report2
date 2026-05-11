@@ -709,6 +709,46 @@ function AtBatForm({
     ? (batters[(allyOrder - 1) % allyMaxOrder]?.name || lineup[(allyOrder - 1) % allyMaxOrder]?.name || "打者")
     : "";
 
+  const [ftFormatting, setFtFormatting] = useState(false);
+  const [freeTextFormatting, setFreeTextFormatting] = useState(false);
+  const [extraPlayTextFormatting, setExtraPlayTextFormatting] = useState(false);
+
+  async function formatWithAI(text: string, setter: (v: string) => void, setLoading: (v: boolean) => void) {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 200,
+          system: `あなたは少年野球の試合速報を記録するアシスタントです。
+入力されたテキストを野球速報の簡潔な表記に整形してください。
+
+【整形ルール】
+- 得点は「★数字」で表す（例：「1点入った」→「★1」、「2点取った」→「★2」）
+- 投手情報は簡潔に（例：「相手投手右投げで速い」→「相手投手 右投 速め」）
+- 助詞・口語・敬語を除去して簡潔にする
+- 選手名・固有名詞はそのまま残す
+- 絵文字・記号は★以外使わない
+- 句読点は不要
+- 出力はテキストのみ、説明や補足は不要
+- 元の意味を変えず最小限の変換にとどめる
+- すでに簡潔な場合はそのまま返す`,
+          messages: [{ role: "user", content: text }],
+        }),
+      });
+      const data = await response.json();
+      const result = data.content?.find((c: any) => c.type === "text")?.text?.trim();
+      if (result) setter(result);
+    } catch (e) {
+      alert("整形に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="rounded-lg border p-3 bg-slate-50">
       <div className="flex gap-2 mb-2">
@@ -718,6 +758,13 @@ function AtBatForm({
           placeholder="自由記載（例：相手投手右投げ遅め）"
           className="flex-1 p-2 border rounded"
         />
+        <button
+          onClick={() => formatWithAI(ft, setFt, setFtFormatting)}
+          disabled={ftFormatting || !ft.trim()}
+          className="px-2 py-1 bg-purple-600 text-white rounded text-sm disabled:opacity-40"
+        >
+          {ftFormatting ? "…" : "✨"}
+        </button>
         <button onClick={addNote} className="px-2 py-1 bg-green-600 text-white rounded">
           追加
         </button>
@@ -836,13 +883,22 @@ function AtBatForm({
         </optgroup>
       </select>
 
-      <input
-        value={freeText}
-        onChange={(e) => setFreeText(e.target.value)}
-        placeholder="自由追記（例：★1、送球間に2塁へ 等）"
-        className="w-full p-2 border rounded mb-3"
-        disabled={!!extraPlay}
-      />
+      <div className="flex gap-2 mb-3">
+        <input
+          value={freeText}
+          onChange={(e) => setFreeText(e.target.value)}
+          placeholder="自由追記（例：★1、送球間に2塁へ 等）"
+          className="flex-1 p-2 border rounded"
+          disabled={!!extraPlay}
+        />
+        <button
+          onClick={() => formatWithAI(freeText, setFreeText, setFreeTextFormatting)}
+          disabled={freeTextFormatting || !freeText.trim() || !!extraPlay}
+          className="px-2 py-1 bg-purple-600 text-white rounded text-sm disabled:opacity-40"
+        >
+          {freeTextFormatting ? "…" : "✨"}
+        </button>
+      </div>
 
       <label className="block text-sm mb-1">走塁プレー</label>
       <div className="flex flex-col gap-2 mb-3">
@@ -855,13 +911,22 @@ function AtBatForm({
             <option key={opt} value={opt}>{opt || '（なし）'}</option>
           ))}
         </select>
-        <input
-          type="text"
-          value={extraPlayText}
-          onChange={(e) => setExtraPlayText(e.target.value)}
-          placeholder="自由追記（例：キャッチャー悪送球など）"
-          className="w-full p-2 border rounded"
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={extraPlayText}
+            onChange={(e) => setExtraPlayText(e.target.value)}
+            placeholder="自由追記（例：キャッチャー悪送球など）"
+            className="flex-1 p-2 border rounded"
+          />
+          <button
+            onClick={() => formatWithAI(extraPlayText, setExtraPlayText, setExtraPlayTextFormatting)}
+            disabled={extraPlayTextFormatting || !extraPlayText.trim()}
+            className="px-2 py-1 bg-purple-600 text-white rounded text-sm disabled:opacity-40"
+          >
+            {extraPlayTextFormatting ? "…" : "✨"}
+          </button>
+        </div>
       </div>
 
       <div className="mb-2 text-sm">
