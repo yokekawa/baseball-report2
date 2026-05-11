@@ -717,31 +717,17 @@ function AtBatForm({
     if (!text.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/format", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 200,
-          system: `あなたは少年野球の試合速報を記録するアシスタントです。
-入力されたテキストを野球速報の簡潔な表記に整形してください。
-
-【整形ルール】
-- 得点は「★数字」で表す（例：「1点入った」→「★1」、「2点取った」→「★2」）
-- 投手情報は簡潔に（例：「相手投手右投げで速い」→「相手投手 右投 速め」）
-- 助詞・口語・敬語を除去して簡潔にする
-- 選手名・固有名詞はそのまま残す
-- 絵文字・記号は★以外使わない
-- 句読点は不要
-- 出力はテキストのみ、説明や補足は不要
-- 元の意味を変えず最小限の変換にとどめる
-- すでに簡潔な場合はそのまま返す`,
-          messages: [{ role: "user", content: text }],
-        }),
+        body: JSON.stringify({ text }),
       });
       const data = await response.json();
-      const result = data.content?.find((c: any) => c.type === "text")?.text?.trim();
-      if (result) setter(result);
+      if (data.result) {
+        setter(data.result);
+      } else {
+        alert("整形に失敗しました");
+      }
     } catch (e) {
       alert("整形に失敗しました");
     } finally {
