@@ -1,4 +1,4 @@
-export default async function handler(req: any, res: any) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -12,16 +12,21 @@ export default async function handler(req: any, res: any) {
   }
 
   const { text } = req.body;
+  console.log("受信テキスト:", text);
+
   if (!text) {
     return res.status(400).json({ error: "text is required" });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
+  console.log("APIキー存在:", !!apiKey);
+
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
   }
 
   try {
+    console.log("Gemini API呼び出し開始");
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
@@ -51,15 +56,18 @@ export default async function handler(req: any, res: any) {
       }
     );
 
+    console.log("Gemini APIステータス:", response.status);
     const data = await response.json();
+    console.log("Geminiレスポンス:", JSON.stringify(data));
     const result = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (result) {
       return res.status(200).json({ result });
     } else {
-      return res.status(500).json({ error: "No result from Gemini" });
+      return res.status(500).json({ error: "No result from Gemini", detail: JSON.stringify(data) });
     }
   } catch (e) {
-    return res.status(500).json({ error: "Gemini API error" });
+    console.log("エラー:", e.message);
+    return res.status(500).json({ error: "Gemini API error", detail: e.message });
   }
-}
+};
