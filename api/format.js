@@ -18,6 +18,9 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "text is required" });
   }
 
+  // 入力を2000文字（≒2000トークン）で制限
+  const limitedText = text.slice(0, 2000);
+
   const apiKey = process.env.GEMINI_API_KEY;
   console.log("APIキー存在:", !!apiKey);
 
@@ -49,6 +52,7 @@ module.exports = async function handler(req, res) {
 - 出力はテキストのみ、説明や補足は不要
 - 意味が不明な部分や野球用語として解釈できない部分は削除せず元のテキストをそのまま残す
 - 入力テキストの全体を必ず出力すること。途中で切らない
+- 出力は入力テキストと同程度の長さを保つこと。入力より大幅に短くしない
 - 元の意味を変えず最小限の変換にとどめる
 - すでに簡潔な場合はそのまま返す
 
@@ -93,8 +97,8 @@ module.exports = async function handler(req, res) {
 - その他、一般語として不自然で野球用語として自然な同音異義語があれば積極的に変換する`
             }]
           },
-          contents: [{ parts: [{ text }] }],
-          generationConfig: { maxOutputTokens: 200 },
+          contents: [{ parts: [{ text: limitedText }] }],
+          generationConfig: { maxOutputTokens: 2000 },
         }),
       }
     );
