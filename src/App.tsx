@@ -624,7 +624,7 @@ function AtBatForm({
   const allyMaxOrder = 9;
 
   const baseTiles = ["なし", "1塁", "2塁", "3塁", "1、2塁", "1、3塁", "2、3塁", "満塁"];
-  const extraOptions = ["", "盗塁成功", "盗塁失敗", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
+  const extraOptions = ["", "盗塁成功", "盗塁失敗", "ダブルスチール", "ワイルドピッチ", "パスボール", "送球ミス", "ボーク"];
   const [fA, setfA] = useState(false);
   const [fU, setfU] = useState(false);
 
